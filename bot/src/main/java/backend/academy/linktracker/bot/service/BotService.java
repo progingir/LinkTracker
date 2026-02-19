@@ -26,7 +26,7 @@ public class BotService implements UpdatesListener {
                 processUpdate(update);
             }
         }
-        return UpdatesListener.CONFIRMED_UPDATES_ALL;
+        return CONFIRMED_UPDATES_ALL;
     }
 
     private void processUpdate(Update update) {
