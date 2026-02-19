@@ -17,10 +17,7 @@ public class HelpCommand implements Command {
         return new SendMessage(update.message().chat().id(), """
                 Доступные команды:
                 /start - начать работу
-                /help - показать это сообщение
-                /track - начать отслеживание (пока не разработано)
-                /untrack - прекратить отслеживание (пока не разработано)
-                /list - список ссылок (пока не разработано)
+                /help - вывести список доступных команд
                 """);
     }
 }
