@@ -1,5 +1,9 @@
 package backend.academy.linktracker.bot;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
+
 import backend.academy.linktracker.bot.command.Command;
 import backend.academy.linktracker.bot.command.HelpCommand;
 import backend.academy.linktracker.bot.command.StartCommand;
@@ -10,16 +14,11 @@ import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
 
 class BotServiceTest {
 
@@ -44,8 +43,9 @@ class BotServiceTest {
         verify(telegramBot).execute(captor.capture());
 
         SendMessage sentMessage = captor.getValue();
-        assertEquals("Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд",
-            sentMessage.getParameters().get("text"));
+        assertEquals(
+                "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд",
+                sentMessage.getParameters().get("text"));
     }
 
     @Test
@@ -72,8 +72,9 @@ class BotServiceTest {
         ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
         verify(telegramBot).execute(captor.capture());
 
-        assertEquals("Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд",
-            captor.getValue().getParameters().get("text"));
+        assertEquals(
+                "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд",
+                captor.getValue().getParameters().get("text"));
     }
 
     private Update mockUpdate(String text, String username, Long chatId) {

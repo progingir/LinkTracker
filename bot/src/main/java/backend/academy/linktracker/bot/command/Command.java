@@ -13,7 +13,7 @@ public interface Command {
 
     default boolean supports(Update update) {
         return update.message() != null
-            && update.message().text() != null
-            && update.message().text().startsWith(command());
+                && update.message().text() != null
+                && update.message().text().startsWith(command());
     }
 }

@@ -19,7 +19,8 @@ public class StartCommand implements Command {
 
     @Override
     public SendMessage handle(Update update) {
-        return new SendMessage(update.message().chat().id(),
-            "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд");
+        return new SendMessage(
+                update.message().chat().id(),
+                "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд");
     }
 }

@@ -7,10 +7,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class HelpCommand implements Command {
     @Override
-    public String command() { return "/help"; }
+    public String command() {
+        return "/help";
+    }
 
     @Override
-    public String description() { return "Вывести список команд"; }
+    public String description() {
+        return "Вывести список команд";
+    }
 
     @Override
     public SendMessage handle(Update update) {

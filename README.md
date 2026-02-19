@@ -1,13 +1,17 @@
 # LinkTracker
 
 ### Требования
+
 * java 25
 * maven 3.9+
 
 ### Запуск проекта
+
 1. склонируйте репозиторий
 2. создайте переменную окружения `TELEGRAM_TOKEN` и вставьте туда токен вашего бота
 3. в корне проекта выполните сборку mvn clean install
 4. запустите модуль бота:
-  - либо через ide run класса BotApplication
-  - либо через терминал командой java -jar bot/target/bot-0.0.1.jar
+
+- либо через ide run класса BotApplication
+- либо через терминал командой java -jar bot/target/bot-0.0.1.jar
+
