@@ -5,15 +5,19 @@ import com.pengrad.telegrambot.request.SendMessage;
 
 public interface Command {
 
-    String command();
+    String commandName();
 
     String description();
 
     SendMessage handle(Update update);
 
     default boolean supports(Update update) {
-        return update.message() != null
-                && update.message().text() != null
-                && update.message().text().startsWith(command());
+        if (update.message() == null || update.message().text() == null) {
+            return false;
+        }
+
+        String text = update.message().text();
+
+        return text.equals(commandName()) || text.startsWith(commandName() + " ");
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class StartCommand implements Command {
 
     @Override
-    public String command() {
+    public String commandName() {
         return "/start";
     }
 
@@ -20,7 +20,8 @@ public class StartCommand implements Command {
     @Override
     public SendMessage handle(Update update) {
         return new SendMessage(
-                update.message().chat().id(),
-                "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд");
+            update.message().chat().id(),
+            "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд"
+        );
     }
 }

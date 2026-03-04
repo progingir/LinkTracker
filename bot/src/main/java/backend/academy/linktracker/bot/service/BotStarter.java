@@ -31,7 +31,7 @@ public class BotStarter implements ApplicationRunner {
 
         for (int i = 0; i < commands.size(); i++) {
             Command cmd = commands.get(i);
-            botCommands[i] = new BotCommand(cmd.command(), cmd.description());
+            botCommands[i] = new BotCommand(cmd.commandName(), cmd.description());
         }
 
         SetMyCommands setMyCommands = new SetMyCommands(botCommands);
