@@ -13,10 +13,6 @@ public class CommandRegistry {
     private final Map<String, String> commandsMetadata;
 
     public CommandRegistry(List<Command> commands) {
-        this.commandsMetadata = commands.stream()
-            .collect(Collectors.toMap(
-                Command::commandName,
-                Command::description
-            ));
+        this.commandsMetadata = commands.stream().collect(Collectors.toMap(Command::commandName, Command::description));
     }
 }

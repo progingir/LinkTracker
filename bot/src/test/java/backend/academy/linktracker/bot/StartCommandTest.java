@@ -1,5 +1,10 @@
 package backend.academy.linktracker.bot;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import backend.academy.linktracker.bot.command.StartCommand;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
@@ -7,10 +12,6 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class StartCommandTest {
 
@@ -31,9 +32,8 @@ class StartCommandTest {
 
         assertEquals(123L, response.getParameters().get("chat_id"));
         assertEquals(
-            "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд",
-            response.getParameters().get("text")
-        );
+                "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд",
+                response.getParameters().get("text"));
     }
 
     @Test

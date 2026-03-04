@@ -1,5 +1,7 @@
 package backend.academy.linktracker.bot.service;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 import backend.academy.linktracker.bot.command.Command;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
@@ -10,8 +12,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import static net.logstash.logback.argument.StructuredArguments.kv;
 
 @Slf4j
 @Service
@@ -36,8 +36,7 @@ public class BotService implements UpdatesListener {
                     executeWithLogging(response, userId);
                 }
             } catch (Exception e) {
-                log.error("Критический сбой при обработке обновления {}: {}",
-                    update.updateId(), e.getMessage(), e);
+                log.error("Критический сбой при обработке обновления {}: {}", update.updateId(), e.getMessage(), e);
             }
         }
         return CONFIRMED_UPDATES_ALL;
@@ -48,30 +47,24 @@ public class BotService implements UpdatesListener {
         String username = extractUsername(update);
         String text = update.message().text();
 
-        Command commandToExecute = commands.stream()
-            .filter(c -> c.supports(update))
-            .findFirst()
-            .orElse(null);
+        Command commandToExecute =
+                commands.stream().filter(c -> c.supports(update)).findFirst().orElse(null);
 
         if (commandToExecute != null) {
-            log.info("Выполняю команду {} для пользователя [id={}, name={}]",
-                kv("command_name", commandToExecute.commandName()),
-                kv("user_id", userId),
-                kv("username", username)
-            );
+            log.info(
+                    "Выполняю команду {} для пользователя [id={}, name={}]",
+                    kv("command_name", commandToExecute.commandName()),
+                    kv("user_id", userId),
+                    kv("username", username));
             return commandToExecute.handle(update);
         } else {
-            log.warn("Неизвестная команда '{}' от пользователя [id={}]",
-                kv("raw_text", text),
-                kv("user_id", userId)
-            );
+            log.warn("Неизвестная команда '{}' от пользователя [id={}]", kv("raw_text", text), kv("user_id", userId));
 
             return new SendMessage(
-                update.message().chat().id(),
-                "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
+                    update.message().chat().id(),
+                    "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
         }
     }
-
 
     private void executeWithLogging(SendMessage message, Long userId) {
         try {
@@ -80,13 +73,14 @@ public class BotService implements UpdatesListener {
                 if (response.isOk()) {
                     log.debug("Сообщение успешно отправлено пользователю {}", kv("user_id", userId));
                 } else {
-                    log.error("Ошибка API Телеграм для пользователя {}: {}",
-                        kv("user_id", userId), response.description());
+                    log.error(
+                            "Ошибка API Телеграм для пользователя {}: {}",
+                            kv("user_id", userId),
+                            response.description());
                 }
             }
         } catch (Throwable e) {
-            log.error("Непредвиденная ошибка при отправке сообщения пользователю {}: {}",
-                userId, e.getMessage());
+            log.error("Непредвиденная ошибка при отправке сообщения пользователю {}: {}", userId, e.getMessage());
         }
     }
 

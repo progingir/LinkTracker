@@ -1,5 +1,10 @@
 package backend.academy.linktracker.bot;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import backend.academy.linktracker.bot.command.Command;
 import backend.academy.linktracker.bot.service.BotService;
 import com.pengrad.telegrambot.TelegramBot;
@@ -13,11 +18,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class BotServiceTest {
 
@@ -56,9 +56,8 @@ class BotServiceTest {
         SendMessage result = ReflectionTestUtils.invokeMethod(botService, "processUpdate", update);
 
         assertEquals(
-            "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд",
-            result.getParameters().get("text")
-        );
+                "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд",
+                result.getParameters().get("text"));
     }
 
     private Update mockUpdate(String text, Long chatId) {
