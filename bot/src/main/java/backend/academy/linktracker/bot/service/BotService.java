@@ -36,7 +36,7 @@ public class BotService implements UpdatesListener {
                     executeWithLogging(response, userId);
                 }
             } catch (Exception e) {
-                log.error("Критический сбой при обработке обновления {}: {}", update.updateId(), e.getMessage(), e);
+                log.error("Критический сбой при обработке обновления {}:", update.updateId(), e);
             }
         }
         return CONFIRMED_UPDATES_ALL;
@@ -80,7 +80,7 @@ public class BotService implements UpdatesListener {
                 }
             }
         } catch (Throwable e) {
-            log.error("Непредвиденная ошибка при отправке сообщения пользователю {}: {}", userId, e.getMessage());
+            log.error("Непредвиденная ошибка при отправке сообщения пользователю {}:", userId, e);
         }
     }
 
@@ -89,9 +89,13 @@ public class BotService implements UpdatesListener {
     }
 
     private String extractUsername(Update update) {
-        if (update.message().from() == null) return "unknown";
+        if (update.message().from() == null) {
+            return "unknown";
+        }
         var from = update.message().from();
-        if (from.username() != null) return from.username();
+        if (from.username() != null) {
+            return from.username();
+        }
         return from.firstName() != null ? from.firstName() : "id:" + from.id();
     }
 }
