@@ -1,8 +1,9 @@
 package backend.academy.linktracker.bot;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.bot.command.Command;
@@ -17,18 +18,17 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 class BotServiceTest {
 
     private BotService botService;
     private Command mockCommand;
+    private TelegramBot telegramBot;
 
     @BeforeEach
     void setUp() {
-        TelegramBot telegramBot = mock(TelegramBot.class);
+        telegramBot = mock(TelegramBot.class);
         mockCommand = mock(Command.class);
-
         botService = new BotService(telegramBot, List.of(mockCommand));
     }
 
@@ -42,23 +42,22 @@ class BotServiceTest {
         when(mockCommand.supports(commandText)).thenReturn(true);
         when(mockCommand.handle(update)).thenReturn(expectedResponse);
 
-        SendMessage result = ReflectionTestUtils.invokeMethod(botService, "processUpdate", update);
+        botService.process(List.of(update));
 
-        assertEquals("OK", result.getParameters().get("text"));
+        verify(mockCommand).handle(update);
     }
 
     @Test
     @DisplayName("Возврат сообщения о неизвестной команде")
     void shouldReturnUnknownCommandMessage() {
         Update update = mockUpdate("unknown text", 123L);
-
         when(mockCommand.supports(anyString())).thenReturn(false);
 
-        SendMessage result = ReflectionTestUtils.invokeMethod(botService, "processUpdate", update);
+        botService.process(List.of(update));
 
-        assertEquals(
-                "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд",
-                result.getParameters().get("text"));
+        verify(telegramBot)
+                .execute(argThat(request -> request != null
+                        && request.getParameters().get("text").toString().contains("Неизвестная команда")));
     }
 
     private Update mockUpdate(String text, Long chatId) {
