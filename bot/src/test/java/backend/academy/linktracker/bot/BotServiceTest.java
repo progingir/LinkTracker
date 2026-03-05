@@ -1,7 +1,7 @@
 package backend.academy.linktracker.bot;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -35,10 +35,11 @@ class BotServiceTest {
     @Test
     @DisplayName("Выбор корректной команды при совпадении")
     void shouldSelectCorrectCommand() {
-        Update update = mockUpdate("/test", 123L);
+        String commandText = "/test";
+        Update update = mockUpdate(commandText, 123L);
         SendMessage expectedResponse = new SendMessage(123L, "OK");
 
-        when(mockCommand.supports(update)).thenReturn(true);
+        when(mockCommand.supports(commandText)).thenReturn(true);
         when(mockCommand.handle(update)).thenReturn(expectedResponse);
 
         SendMessage result = ReflectionTestUtils.invokeMethod(botService, "processUpdate", update);
@@ -51,7 +52,7 @@ class BotServiceTest {
     void shouldReturnUnknownCommandMessage() {
         Update update = mockUpdate("unknown text", 123L);
 
-        when(mockCommand.supports(any())).thenReturn(false);
+        when(mockCommand.supports(anyString())).thenReturn(false);
 
         SendMessage result = ReflectionTestUtils.invokeMethod(botService, "processUpdate", update);
 

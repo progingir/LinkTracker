@@ -11,13 +11,7 @@ public interface Command {
 
     SendMessage handle(Update update);
 
-    default boolean supports(Update update) {
-        if (update.message() == null || update.message().text() == null) {
-            return false;
-        }
-
-        String text = update.message().text();
-
+    default boolean supports(String text) {
         return text.equals(commandName()) || text.startsWith(commandName() + " ");
     }
 }

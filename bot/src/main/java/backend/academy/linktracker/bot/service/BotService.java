@@ -1,7 +1,5 @@
 package backend.academy.linktracker.bot.service;
 
-import static net.logstash.logback.argument.StructuredArguments.kv;
-
 import backend.academy.linktracker.bot.command.Command;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
@@ -36,7 +34,10 @@ public class BotService implements UpdatesListener {
                     executeWithLogging(response, userId);
                 }
             } catch (Exception e) {
-                log.error("Критический сбой при обработке обновления {}:", update.updateId(), e);
+                log.atError()
+                        .setCause(e)
+                        .addKeyValue("update_id", update.updateId())
+                        .log("Критический сбой при обработке обновления");
             }
         }
         return CONFIRMED_UPDATES_ALL;
@@ -48,20 +49,24 @@ public class BotService implements UpdatesListener {
         String text = update.message().text();
 
         Command commandToExecute =
-                commands.stream().filter(c -> c.supports(update)).findFirst().orElse(null);
+                commands.stream().filter(c -> c.supports(text)).findFirst().orElse(null);
 
         if (commandToExecute != null) {
-            log.info(
-                    "Выполняю команду {} для пользователя [id={}, name={}]",
-                    kv("command_name", commandToExecute.commandName()),
-                    kv("user_id", userId),
-                    kv("username", username));
+            log.atInfo()
+                    .addKeyValue("command_name", commandToExecute.commandName())
+                    .addKeyValue("user_id", userId)
+                    .addKeyValue("username", username)
+                    .log("Выполняю команду");
+
             return commandToExecute.handle(update);
         } else {
-            log.warn("Неизвестная команда '{}' от пользователя [id={}]", kv("raw_text", text), kv("user_id", userId));
+            log.atWarn()
+                    .addKeyValue("raw_text", text)
+                    .addKeyValue("user_id", userId)
+                    .log("Получена неизвестная команда");
 
             return new SendMessage(
-                    update.message().chat().id(),
+                    (long) update.message().chat().id(),
                     "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
         }
     }
@@ -71,16 +76,19 @@ public class BotService implements UpdatesListener {
             SendResponse response = telegramBot.execute(message);
             if (response != null) {
                 if (response.isOk()) {
-                    log.debug("Сообщение успешно отправлено пользователю {}", kv("user_id", userId));
+                    log.atDebug().addKeyValue("user_id", userId).log("Сообщение успешно отправлено пользователю");
                 } else {
-                    log.error(
-                            "Ошибка API Телеграм для пользователя {}: {}",
-                            kv("user_id", userId),
-                            response.description());
+                    log.atError()
+                            .addKeyValue("user_id", userId)
+                            .addKeyValue("description", response.description())
+                            .log("Ошибка API Телеграм для пользователя");
                 }
             }
         } catch (Throwable e) {
-            log.error("Непредвиденная ошибка при отправке сообщения пользователю {}:", userId, e);
+            log.atError()
+                    .setCause(e)
+                    .addKeyValue("user_id", userId)
+                    .log("Непредвиденная ошибка при отправке сообщения пользователю");
         }
     }
 
@@ -89,10 +97,10 @@ public class BotService implements UpdatesListener {
     }
 
     private String extractUsername(Update update) {
-        if (update.message().from() == null) {
+        var from = update.message().from();
+        if (from == null) {
             return "unknown";
         }
-        var from = update.message().from();
         if (from.username() != null) {
             return from.username();
         }

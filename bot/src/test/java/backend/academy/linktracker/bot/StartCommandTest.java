@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -39,12 +40,8 @@ class StartCommandTest {
     @Test
     @DisplayName("Поддержка команды /start")
     void supportsCorrectCommand() {
-        Update update = mock(Update.class);
-        Message message = mock(Message.class);
-
-        when(update.message()).thenReturn(message);
-        when(message.text()).thenReturn("/start");
-
-        assertTrue(startCommand.supports(update));
+        assertTrue(startCommand.supports("/start"));
+        assertTrue(startCommand.supports("/start argument"));
+        assertFalse(startCommand.supports("/help"));
     }
 }
