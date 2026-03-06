@@ -27,7 +27,7 @@ public class BotService implements UpdatesListener {
             }
 
             try {
-                SendMessage response = processUpdate(update);
+                SendMessage response = createResponse(update);
 
                 if (response != null) {
                     Long userId = extractUserId(update);
@@ -43,7 +43,7 @@ public class BotService implements UpdatesListener {
         return CONFIRMED_UPDATES_ALL;
     }
 
-    private SendMessage processUpdate(Update update) {
+    private SendMessage createResponse(Update update) {
         Long userId = extractUserId(update);
         String username = extractUsername(update);
         String text = update.message().text();

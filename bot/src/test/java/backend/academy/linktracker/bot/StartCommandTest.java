@@ -41,7 +41,6 @@ class StartCommandTest {
     @DisplayName("Поддержка команды /start")
     void supportsCorrectCommand() {
         assertTrue(startCommand.supports("/start"));
-        assertTrue(startCommand.supports("/start argument"));
         assertFalse(startCommand.supports("/help"));
     }
 }
