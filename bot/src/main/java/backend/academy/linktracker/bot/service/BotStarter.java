@@ -35,6 +35,15 @@ public class BotStarter implements ApplicationRunner {
         }
 
         SetMyCommands setMyCommands = new SetMyCommands(botCommands);
-        telegramBot.execute(setMyCommands);
+        var response = telegramBot.execute(setMyCommands);
+
+        if (response.isOk()) {
+            log.atInfo().addKeyValue("commands_count", commands.size()).log("Меню команд успешно зарегистрировано");
+        } else {
+            log.atError()
+                    .addKeyValue("error_code", response.errorCode())
+                    .addKeyValue("description", response.description())
+                    .log("Ошибка при регистрации меню команд");
+        }
     }
 }

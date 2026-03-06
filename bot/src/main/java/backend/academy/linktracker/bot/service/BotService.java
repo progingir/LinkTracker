@@ -74,15 +74,14 @@ public class BotService implements UpdatesListener {
     private void executeWithLogging(SendMessage message, Long userId) {
         try {
             SendResponse response = telegramBot.execute(message);
-            if (response != null) {
-                if (response.isOk()) {
-                    log.atDebug().addKeyValue("user_id", userId).log("Сообщение успешно отправлено пользователю");
-                } else {
-                    log.atError()
-                            .addKeyValue("user_id", userId)
-                            .addKeyValue("description", response.description())
-                            .log("Ошибка API Телеграм для пользователя");
-                }
+
+            if (response.isOk()) {
+                log.atDebug().addKeyValue("user_id", userId).log("Сообщение успешно отправлено пользователю");
+            } else {
+                log.atError()
+                        .addKeyValue("user_id", userId)
+                        .addKeyValue("description", response.description())
+                        .log("Ошибка API Телеграм для пользователя");
             }
         } catch (Throwable e) {
             log.atError()
