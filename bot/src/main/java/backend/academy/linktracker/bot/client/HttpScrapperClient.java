@@ -60,17 +60,12 @@ public class HttpScrapperClient implements ScrapperClient {
     }
 
     @Override
-    public LinkResponse addLink(Long chatId, URI link, List<String> tags) {
-        log.atInfo()
-            .addKeyValue("chat_id", chatId)
-            .addKeyValue("link", link)
-            .log("Отправка запроса на добавление ссылки в Scrapper");
-
-        return restClient
-            .post()
+    public LinkResponse addLink(Long chatId, URI link, List<String> tags, List<String> filters) {
+        log.atInfo().addKeyValue("chat_id", chatId).addKeyValue("link", link).log("Отправка запроса на добавление ссылки");
+        return restClient.post()
             .uri("/links")
             .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
-            .body(new AddLinkRequest(link, tags, List.of()))
+            .body(new AddLinkRequest(link, tags, filters))
             .retrieve()
             .body(LinkResponse.class);
     }

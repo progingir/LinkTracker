@@ -29,7 +29,7 @@ public class ListCommand implements Command {
     @Override
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
-
+        String messageText = update.message().text();
         stateRepository.clear(chatId);
 
         try {
@@ -38,8 +38,23 @@ public class ListCommand implements Command {
                 return new SendMessage(chatId, "Ваш список отслеживания пуст. Используйте /track, чтобы добавить ссылку.");
             }
 
-            String listText = response.links().stream()
-                .map(link -> "• " + link.url() + (link.tags().isEmpty() ? "" : " (теги: " + String.join(", ", link.tags()) + ")"))
+            String[] parts = messageText.split("\\s+", 2);
+            String filterTag = parts.length > 1 ? parts[1].trim() : null;
+
+            var linksToShow = response.links();
+
+            if (filterTag != null && !filterTag.isEmpty()) {
+                linksToShow = linksToShow.stream()
+                    .filter(link -> link.tags() != null && link.tags().contains(filterTag))
+                    .toList();
+
+                if (linksToShow.isEmpty()) {
+                    return new SendMessage(chatId, "По тегу '" + filterTag + "' ссылок не найдено.");
+                }
+            }
+
+            String listText = linksToShow.stream()
+                .map(link -> "• " + link.url() + (link.tags() == null || link.tags().isEmpty() ? "" : " (теги: " + String.join(", ", link.tags()) + ")"))
                 .collect(Collectors.joining("\n", "Вы отслеживаете следующие ресурсы:\n", ""));
 
             return new SendMessage(chatId, listText);

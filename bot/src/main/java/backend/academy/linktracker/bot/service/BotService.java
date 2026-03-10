@@ -59,15 +59,31 @@ public class BotService implements UpdatesListener {
         return CONFIRMED_UPDATES_ALL;
     }
 
+    public void sendNotification(backend.academy.linktracker.bot.dto.LinkUpdate update) {
+        String messageText = "🔔 Обновление по ссылке: " + update.url() + "\n" + update.description();
+
+        for (Long chatId : update.tgChatIds()) {
+            try {
+                executeWithLogging(new SendMessage(chatId, messageText), chatId);
+            } catch (Exception e) {
+                log.atError()
+                    .setCause(e)
+                    .addKeyValue("chat_id", chatId)
+                    .log("Не удалось отправить уведомление об обновлении");
+            }
+        }
+    }
+
     private SendMessage createResponse(Update update) {
         Long userId = extractUserId(update);
-        String username = extractUsername(update);
         String text = update.message().text();
         long chatId = update.message().chat().id();
 
         var context = stateRepository.getContext(chatId);
 
         if (text.startsWith("/")) {
+            stateRepository.clear(chatId);
+
             Command commandToExecute = commands.stream()
                 .filter(c -> c.supports(text))
                 .findFirst()
@@ -77,7 +93,6 @@ public class BotService implements UpdatesListener {
                 log.atInfo().addKeyValue("command", commandToExecute.commandName()).log("Выполняю команду");
                 return commandToExecute.handle(update);
             } else {
-                stateRepository.clear(chatId);
                 return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список.");
             }
         }

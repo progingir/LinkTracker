@@ -42,7 +42,7 @@ class BotServiceTest {
         when(telegramBot.execute(any())).thenReturn(mockResponse);
 
         when(stateRepository.getContext(anyLong()))
-            .thenReturn(new StateRepository.UserContext(UserState.NONE, null));
+            .thenReturn(new StateRepository.UserContext(UserState.NONE, null, null));
 
         botService = new BotService(telegramBot, List.of(mockCommand), stateRepository, List.of());
     }

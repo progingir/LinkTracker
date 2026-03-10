@@ -11,7 +11,7 @@ public interface ScrapperClient {
 
     ListLinksResponse getLinks(Long chatId);
 
-    LinkResponse addLink(Long chatId, URI link, List<String> tags);
+    LinkResponse addLink(Long chatId, URI link, List<String> tags, List<String> filters);
 
     LinkResponse removeLink(Long chatId, URI link);
 }

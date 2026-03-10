@@ -2,6 +2,7 @@ package backend.academy.linktracker.scrapper.repository;
 
 import backend.academy.linktracker.scrapper.domain.Link;
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,10 +39,12 @@ public class InMemoryLinkRepository implements LinkRepository {
             }
 
             Link newLink = new Link(
-                    linkIdGenerator.getAndIncrement(),
-                    url,
-                    tags != null ? tags : List.of(),
-                    filters != null ? filters : List.of());
+                linkIdGenerator.getAndIncrement(),
+                chatId,
+                url,
+                tags != null ? tags : List.of(),
+                filters != null ? filters : List.of(),
+                OffsetDateTime.now());
 
             links.add(newLink);
             result.set(Optional.of(newLink));
@@ -80,5 +83,24 @@ public class InMemoryLinkRepository implements LinkRepository {
     @Override
     public void removeAllByChatId(Long chatId) {
         chatLinks.remove(chatId);
+    }
+
+    @Override
+    public List<Link> findAll() {
+        return chatLinks.values().stream()
+            .flatMap(List::stream)
+            .toList();
+    }
+
+    @Override
+    public void updateLastUpdate(Long linkId, OffsetDateTime updatedAt) {
+        chatLinks.values().forEach(links -> {
+            for (int i = 0; i < links.size(); i++) {
+                Link l = links.get(i);
+                if (l.id().equals(linkId)) {
+                    links.set(i, new Link(l.id(), l.chatId(), l.url(), l.tags(), l.filters(), updatedAt));
+                }
+            }
+        });
     }
 }
