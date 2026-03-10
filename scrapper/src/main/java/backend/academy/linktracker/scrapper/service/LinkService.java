@@ -26,15 +26,13 @@ public class LinkService {
     public Link addLink(Long chatId, URI uri, List<String> tags, List<String> filters) {
         checkChatExists(chatId);
 
-        return linkRepository.save(chatId, uri, tags, filters)
-            .orElseThrow(() -> new LinkAlreadyTrackedException(uri));
+        return linkRepository.save(chatId, uri, tags, filters).orElseThrow(() -> new LinkAlreadyTrackedException(uri));
     }
 
     public Link removeLink(Long chatId, URI uri) {
         checkChatExists(chatId);
 
-        return linkRepository.remove(chatId, uri)
-            .orElseThrow(() -> new LinkNotFoundException(uri));
+        return linkRepository.remove(chatId, uri).orElseThrow(() -> new LinkNotFoundException(uri));
     }
 
     private void checkChatExists(Long chatId) {

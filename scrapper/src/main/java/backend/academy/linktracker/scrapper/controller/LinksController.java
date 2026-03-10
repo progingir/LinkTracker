@@ -33,49 +33,50 @@ public class LinksController {
         List<Link> links = linkService.getLinks(tgChatId);
 
         List<LinkResponse> responseList = links.stream()
-            .map(link -> new LinkResponse(link.id(), link.url(), link.tags(), link.filters()))
-            .toList();
+                .map(link -> new LinkResponse(link.id(), link.url(), link.tags(), link.filters()))
+                .toList();
 
-        log.atInfo().addKeyValue("chat_id", tgChatId).addKeyValue("links_count", responseList.size()).log("Список ссылок успешно сформирован");
+        log.atInfo()
+                .addKeyValue("chat_id", tgChatId)
+                .addKeyValue("links_count", responseList.size())
+                .log("Список ссылок успешно сформирован");
         return new ListLinksResponse(responseList, responseList.size());
     }
 
     @PostMapping
     public LinkResponse addLink(
-        @RequestHeader("Tg-Chat-Id") Long tgChatId,
-        @Valid @RequestBody AddLinkRequest request) {
+            @RequestHeader("Tg-Chat-Id") Long tgChatId, @Valid @RequestBody AddLinkRequest request) {
 
         log.atInfo()
-            .addKeyValue("chat_id", tgChatId)
-            .addKeyValue("link", request.link())
-            .log("Запрос на добавление ссылки");
+                .addKeyValue("chat_id", tgChatId)
+                .addKeyValue("link", request.link())
+                .log("Запрос на добавление ссылки");
 
         Link savedLink = linkService.addLink(tgChatId, request.link(), request.tags(), request.filters());
 
         log.atInfo()
-            .addKeyValue("chat_id", tgChatId)
-            .addKeyValue("link_id", savedLink.id())
-            .log("Ссылка успешно добавлена");
+                .addKeyValue("chat_id", tgChatId)
+                .addKeyValue("link_id", savedLink.id())
+                .log("Ссылка успешно добавлена");
 
         return new LinkResponse(savedLink.id(), savedLink.url(), savedLink.tags(), savedLink.filters());
     }
 
     @DeleteMapping
     public LinkResponse removeLink(
-        @RequestHeader("Tg-Chat-Id") Long tgChatId,
-        @Valid @RequestBody RemoveLinkRequest request) {
+            @RequestHeader("Tg-Chat-Id") Long tgChatId, @Valid @RequestBody RemoveLinkRequest request) {
 
         log.atInfo()
-            .addKeyValue("chat_id", tgChatId)
-            .addKeyValue("link", request.link())
-            .log("Запрос на удаление ссылки");
+                .addKeyValue("chat_id", tgChatId)
+                .addKeyValue("link", request.link())
+                .log("Запрос на удаление ссылки");
 
         Link removedLink = linkService.removeLink(tgChatId, request.link());
 
         log.atInfo()
-            .addKeyValue("chat_id", tgChatId)
-            .addKeyValue("link_id", removedLink.id())
-            .log("Ссылка успешно удалена");
+                .addKeyValue("chat_id", tgChatId)
+                .addKeyValue("link_id", removedLink.id())
+                .log("Ссылка успешно удалена");
 
         return new LinkResponse(removedLink.id(), removedLink.url(), removedLink.tags(), removedLink.filters());
     }

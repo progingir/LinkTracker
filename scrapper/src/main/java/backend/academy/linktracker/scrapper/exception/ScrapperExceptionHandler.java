@@ -52,16 +52,15 @@ public class ScrapperExceptionHandler {
 
     private ResponseEntity<ApiErrorResponse> buildErrorResponse(Exception ex, HttpStatus status, String description) {
         List<String> stacktrace = Arrays.stream(ex.getStackTrace())
-            .map(StackTraceElement::toString)
-            .toList();
+                .map(StackTraceElement::toString)
+                .toList();
 
         ApiErrorResponse response = new ApiErrorResponse(
-            description,
-            String.valueOf(status.value()),
-            ex.getClass().getSimpleName(),
-            ex.getMessage(),
-            stacktrace
-        );
+                description,
+                String.valueOf(status.value()),
+                ex.getClass().getSimpleName(),
+                ex.getMessage(),
+                stacktrace);
         return new ResponseEntity<>(response, status);
     }
 }

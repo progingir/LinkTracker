@@ -1,23 +1,39 @@
 package backend.academy.linktracker.bot.service;
 
 import backend.academy.linktracker.bot.command.Command;
+import backend.academy.linktracker.bot.handler.StateHandler;
+import backend.academy.linktracker.bot.repository.StateRepository;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.SendResponse;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class BotService implements UpdatesListener {
 
     private final TelegramBot telegramBot;
     private final List<Command> commands;
+    private final StateRepository stateRepository;
+    private final Map<UserState, StateHandler> stateHandlers;
+
+    public BotService(
+        TelegramBot telegramBot,
+        List<Command> commands,
+        StateRepository stateRepository,
+        List<StateHandler> handlers) {
+        this.telegramBot = telegramBot;
+        this.commands = commands;
+        this.stateRepository = stateRepository;
+        this.stateHandlers = handlers.stream()
+            .collect(Collectors.toMap(StateHandler::getHandledState, h -> h));
+    }
 
     @Override
     public int process(List<Update> updates) {
@@ -35,9 +51,9 @@ public class BotService implements UpdatesListener {
                 }
             } catch (Exception e) {
                 log.atError()
-                        .setCause(e)
-                        .addKeyValue("update_id", update.updateId())
-                        .log("Критический сбой при обработке обновления");
+                    .setCause(e)
+                    .addKeyValue("update_id", update.updateId())
+                    .log("Критический сбой при обработке обновления");
             }
         }
         return CONFIRMED_UPDATES_ALL;
@@ -47,27 +63,31 @@ public class BotService implements UpdatesListener {
         Long userId = extractUserId(update);
         String username = extractUsername(update);
         String text = update.message().text();
+        long chatId = update.message().chat().id();
 
-        Command commandToExecute =
-                commands.stream().filter(c -> c.supports(text)).findFirst().orElse(null);
+        var context = stateRepository.getContext(chatId);
 
-        if (commandToExecute != null) {
-            log.atInfo()
-                    .addKeyValue("command_name", commandToExecute.commandName())
-                    .addKeyValue("user_id", userId)
-                    .addKeyValue("username", username)
-                    .log("Выполняю команду");
+        if (text.startsWith("/")) {
+            Command commandToExecute = commands.stream()
+                .filter(c -> c.supports(text))
+                .findFirst()
+                .orElse(null);
 
-            return commandToExecute.handle(update);
+            if (commandToExecute != null) {
+                log.atInfo().addKeyValue("command", commandToExecute.commandName()).log("Выполняю команду");
+                return commandToExecute.handle(update);
+            } else {
+                stateRepository.clear(chatId);
+                return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список.");
+            }
+        }
+
+        StateHandler handler = stateHandlers.get(context.getState());
+        if (handler != null) {
+            return handler.handle(update, context);
         } else {
-            log.atWarn()
-                    .addKeyValue("raw_text", text)
-                    .addKeyValue("user_id", userId)
-                    .log("Получена неизвестная команда");
-
-            return new SendMessage(
-                    (long) update.message().chat().id(),
-                    "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
+            log.atWarn().addKeyValue("user_id", userId).addKeyValue("text", text).log("Текст вне контекста");
+            return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
         }
     }
 
@@ -79,15 +99,15 @@ public class BotService implements UpdatesListener {
                 log.atDebug().addKeyValue("user_id", userId).log("Сообщение успешно отправлено пользователю");
             } else {
                 log.atError()
-                        .addKeyValue("user_id", userId)
-                        .addKeyValue("description", response.description())
-                        .log("Ошибка API Телеграм для пользователя");
+                    .addKeyValue("user_id", userId)
+                    .addKeyValue("description", response.description())
+                    .log("Ошибка API Телеграм для пользователя");
             }
         } catch (Throwable e) {
             log.atError()
-                    .setCause(e)
-                    .addKeyValue("user_id", userId)
-                    .log("Непредвиденная ошибка при отправке сообщения пользователю");
+                .setCause(e)
+                .addKeyValue("user_id", userId)
+                .log("Непредвиденная ошибка при отправке сообщения пользователю");
         }
     }
 
@@ -105,4 +125,5 @@ public class BotService implements UpdatesListener {
         }
         return from.firstName() != null ? from.firstName() : "id:" + from.id();
     }
+
 }

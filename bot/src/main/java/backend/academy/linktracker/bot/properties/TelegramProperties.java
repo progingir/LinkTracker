@@ -25,6 +25,10 @@ public class TelegramProperties {
     private String url;
 
     @NotEmpty
+    @URL
+    private String scrapperUrl;
+
+    @NotEmpty
     private String token;
 
     @DurationUnit(ChronoUnit.MILLIS)

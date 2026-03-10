@@ -38,11 +38,10 @@ public class InMemoryLinkRepository implements LinkRepository {
             }
 
             Link newLink = new Link(
-                linkIdGenerator.getAndIncrement(),
-                url,
-                tags != null ? tags : List.of(),
-                filters != null ? filters : List.of()
-            );
+                    linkIdGenerator.getAndIncrement(),
+                    url,
+                    tags != null ? tags : List.of(),
+                    filters != null ? filters : List.of());
 
             links.add(newLink);
             result.set(Optional.of(newLink));
