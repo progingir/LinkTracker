@@ -5,7 +5,7 @@
     <parent>
         <groupId>backend.academy.link-tracker</groupId>
         <artifactId>parent</artifactId>
-        <version>0.0.1</version>
+        <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
