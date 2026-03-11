@@ -1,0 +1,52 @@
+syntax = "proto3";
+package backend.academy.linktracker.grpc;
+option java_multiple_files = true;
+
+// Сервис, который работает на стороне Бота
+service BotService {
+  rpc SendUpdate (LinkUpdateMsg) returns (Empty);
+}
+
+// Сервис, который работает на стороне Скраппера
+service ScrapperService {
+  rpc RegisterChat (ChatRequest) returns (Empty);
+  rpc DeleteChat (ChatRequest) returns (Empty);
+  rpc GetLinks (ChatRequest) returns (ListLinksResponseMsg);
+  rpc AddLink (AddLinkRequestMsg) returns (LinkResponseMsg);
+  rpc RemoveLink (RemoveLinkRequestMsg) returns (LinkResponseMsg);
+}
+
+message LinkUpdateMsg {
+  int64 id = 1;
+  string url = 2;
+  string description = 3;
+  repeated int64 tgChatIds = 4;
+}
+
+message ChatRequest { int64 id = 1; }
+
+message AddLinkRequestMsg {
+  int64 chatId = 1;
+  string link = 2;
+  repeated string tags = 3;
+  repeated string filters = 4;
+}
+
+message RemoveLinkRequestMsg {
+  int64 chatId = 1;
+  string link = 2;
+}
+
+message LinkResponseMsg {
+  int64 id = 1;
+  string url = 2;
+  repeated string tags = 3;
+  repeated string filters = 4;
+}
+
+message ListLinksResponseMsg {
+  repeated LinkResponseMsg links = 1;
+  int32 size = 2;
+}
+
+message Empty {}

@@ -4,6 +4,13 @@ server:
 spring:
   application:
     name: bot
+  grpc:
+    server:
+      port: 9090
+    client:
+      default-channel:
+        address: static://${APP_SCRAPPER_HOST:localhost}:9091
+        negotiation-type: plaintext
 
 app:
   telegram:
@@ -12,6 +19,8 @@ app:
     update-listener-sleep: 1s
     debug: false
     scrapper-url: http://localhost:8081
+  grpc:
+    scrapper-deadline: 5s
 
 logging:
   structured:

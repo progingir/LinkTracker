@@ -4,7 +4,13 @@ server:
 spring:
   application:
     name: scrapper
-
+  grpc:
+    server:
+      port: 9091
+    client:
+      default-channel:
+        address: static://${APP_BOT_HOST:localhost}:9090
+        negotiation-type: plaintext
 app:
   bot:
     url: http://localhost:8080
@@ -17,3 +23,5 @@ app:
     token: ${GITHUB_TOKEN}
   scheduler:
     interval: 30s
+  grpc:
+    bot-deadline: 5s

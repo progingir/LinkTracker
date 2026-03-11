@@ -1,26 +1,41 @@
 package backend.academy.linktracker.scrapper.client;
 
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
-import backend.academy.linktracker.scrapper.properties.BotProperties;
+import backend.academy.linktracker.grpc.BotServiceGrpc;
+import backend.academy.linktracker.grpc.LinkUpdateMsg;
+import io.grpc.StatusRuntimeException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class BotNotificationClient {
-    private final RestClient restClient;
 
-    public BotNotificationClient(RestClient.Builder builder, BotProperties properties) {
-        this.restClient = builder.baseUrl(properties.getUrl()).build();
-    }
+    private final BotServiceGrpc.BotServiceBlockingStub stub;
+
+    @Value("${app.grpc.bot-deadline:5s}")
+    private Duration deadline;
 
     public void sendUpdate(LinkUpdate update) {
-        log.atInfo().addKeyValue("link", update.url()).log("Отправка уведомления в Бот");
         try {
-            restClient.post().uri("/updates").body(update).retrieve().toBodilessEntity();
+            stub.withDeadlineAfter(deadline.toMillis(), TimeUnit.MILLISECONDS)
+                .sendUpdate(LinkUpdateMsg.newBuilder()
+                    .setId(update.id())
+                    .setUrl(update.url().toString())
+                    .setDescription(update.description())
+                    .addAllTgChatIds(update.tgChatIds())
+                    .build());
+            log.info("Уведомление успешно отправлено по gRPC");
+        } catch (StatusRuntimeException e) {
+            log.error("Ошибка gRPC при отправке обновления боту (код: {}): {}",
+                e.getStatus().getCode(), e.getMessage());
         } catch (Exception e) {
-            log.atError().setCause(e).log("Не удалось доставить уведомление в Бот");
+            log.error("Непредвиденная ошибка при отправке уведомления", e);
         }
     }
 }
