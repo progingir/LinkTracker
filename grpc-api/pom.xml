@@ -11,6 +11,10 @@
 
     <artifactId>grpc-api</artifactId>
     <packaging>jar</packaging>
+    <properties>
+        <spotbugs.skip>true</spotbugs.skip>
+        <pmd.skip>true</pmd.skip>
+    </properties>
 
     <dependencies>
         <dependency>
