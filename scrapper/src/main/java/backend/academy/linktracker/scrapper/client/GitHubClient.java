@@ -24,9 +24,7 @@ public class GitHubClient {
                     .retrieve()
                     .body(GitHubResponse.class));
         } catch (Exception e) {
-            log.atError()
-                .setCause(e)
-                .log("Ошибка при вызове GitHub API");
+            log.atError().setCause(e).log("Ошибка при вызове GitHub API");
             return Optional.empty();
         }
     }

@@ -31,35 +31,27 @@ public class HttpScrapperClient implements ScrapperClient {
 
     @Override
     public void registerChat(Long chatId) {
-        log.atInfo()
-            .addKeyValue("chat_id", chatId)
-            .log("Отправка запроса на регистрацию чата в Scrapper");
+        log.atInfo().addKeyValue("chat_id", chatId).log("Отправка запроса на регистрацию чата в Scrapper");
 
         restClient
                 .post()
                 .uri("/tg-chat/{id}", chatId)
                 .retrieve()
                 .onStatus(status -> status == HttpStatus.CONFLICT, (request, response) -> {
-                    log.atInfo()
-                        .addKeyValue("chat_id", chatId)
-                        .log("Чат уже был зарегистрирован ранее");
+                    log.atInfo().addKeyValue("chat_id", chatId).log("Чат уже был зарегистрирован ранее");
                 })
                 .toBodilessEntity();
     }
 
     @Override
     public void deleteChat(Long chatId) {
-        log.atInfo()
-            .addKeyValue("chat_id", chatId)
-            .log("Отправка запроса на удаление чата из Scrapper");
+        log.atInfo().addKeyValue("chat_id", chatId).log("Отправка запроса на удаление чата из Scrapper");
         restClient.delete().uri("/tg-chat/{id}", chatId).retrieve().toBodilessEntity();
     }
 
     @Override
     public ListLinksResponse getLinks(Long chatId) {
-        log.atInfo()
-            .addKeyValue("chat_id", chatId)
-            .log("Запрос списка ссылок из Scrapper");
+        log.atInfo().addKeyValue("chat_id", chatId).log("Запрос списка ссылок из Scrapper");
         return restClient
                 .get()
                 .uri("/links")

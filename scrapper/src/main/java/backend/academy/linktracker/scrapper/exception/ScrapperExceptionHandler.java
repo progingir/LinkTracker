@@ -18,17 +18,13 @@ public class ScrapperExceptionHandler {
 
     @ExceptionHandler({ChatNotFoundException.class, LinkNotFoundException.class})
     public ResponseEntity<ApiErrorResponse> handleNotFound(RuntimeException ex) {
-        log.atWarn()
-            .setCause(ex)
-            .log("Ресурс не найден");
+        log.atWarn().setCause(ex).log("Ресурс не найден");
         return buildErrorResponse(ex, HttpStatus.NOT_FOUND, "Ресурс не найден");
     }
 
     @ExceptionHandler({ChatAlreadyExistsException.class, LinkAlreadyTrackedException.class})
     public ResponseEntity<ApiErrorResponse> handleConflict(RuntimeException ex) {
-        log.atWarn()
-            .setCause(ex)
-            .log("Конфликт данных");
+        log.atWarn().setCause(ex).log("Конфликт данных");
         return buildErrorResponse(ex, HttpStatus.CONFLICT, "Конфликт данных");
     }
 
@@ -38,25 +34,19 @@ public class ScrapperExceptionHandler {
         HttpMessageNotReadableException.class
     })
     public ResponseEntity<ApiErrorResponse> handleBadRequest(Exception ex) {
-        log.atWarn()
-            .setCause(ex)
-            .log("Некорректные параметры запроса");
+        log.atWarn().setCause(ex).log("Некорректные параметры запроса");
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, "Некорректные параметры запроса");
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneralException(Exception ex) {
-        log.atError()
-            .setCause(ex)
-            .log("Непредвиденная ошибка сервера");
+        log.atError().setCause(ex).log("Непредвиденная ошибка сервера");
         return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, "Внутренняя ошибка сервера");
     }
 
     @ExceptionHandler(InvalidLinkException.class)
     public ResponseEntity<ApiErrorResponse> handleInvalidLink(InvalidLinkException ex) {
-        log.atWarn()
-            .setCause(ex)
-            .log("Некорректный формат ссылки");
+        log.atWarn().setCause(ex).log("Некорректный формат ссылки");
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, "Некорректные параметры запроса");
     }
 

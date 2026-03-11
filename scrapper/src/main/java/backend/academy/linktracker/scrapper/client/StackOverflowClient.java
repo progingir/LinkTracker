@@ -28,9 +28,7 @@ public class StackOverflowClient {
                 return Optional.of(response.items().getFirst());
             }
         } catch (Exception e) {
-            log.atError()
-                .setCause(e)
-                .log("Ошибка при вызове StackOverflow API");
+            log.atError().setCause(e).log("Ошибка при вызове StackOverflow API");
         }
         return Optional.empty();
     }

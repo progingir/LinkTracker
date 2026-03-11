@@ -19,9 +19,7 @@ public class TelegramMessageSender {
             SendResponse response = telegramBot.execute(message);
 
             if (response.isOk()) {
-                log.atDebug()
-                    .addKeyValue("user_id", userId)
-                    .log("Сообщение успешно отправлено пользователю");
+                log.atDebug().addKeyValue("user_id", userId).log("Сообщение успешно отправлено пользователю");
             } else {
                 log.atError()
                         .addKeyValue("user_id", userId)

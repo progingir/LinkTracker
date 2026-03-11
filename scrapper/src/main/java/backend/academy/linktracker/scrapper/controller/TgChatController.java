@@ -19,23 +19,15 @@ public class TgChatController {
 
     @PostMapping("/{id}")
     public void registerChat(@PathVariable Long id) {
-        log.atInfo()
-            .addKeyValue("chat_id", id)
-            .log("Поступил запрос на регистрацию чата");
+        log.atInfo().addKeyValue("chat_id", id).log("Поступил запрос на регистрацию чата");
         tgChatService.registerChat(id);
-        log.atInfo()
-            .addKeyValue("chat_id", id)
-            .log("Чат успешно зарегистрирован");
+        log.atInfo().addKeyValue("chat_id", id).log("Чат успешно зарегистрирован");
     }
 
     @DeleteMapping("/{id}")
     public void deleteChat(@PathVariable Long id) {
-        log.atInfo()
-            .addKeyValue("chat_id", id)
-            .log("Поступил запрос на удаление чата");
+        log.atInfo().addKeyValue("chat_id", id).log("Поступил запрос на удаление чата");
         tgChatService.deleteChat(id);
-        log.atInfo()
-            .addKeyValue("chat_id", id)
-            .log("Чат успешно удален");
+        log.atInfo().addKeyValue("chat_id", id).log("Чат успешно удален");
     }
 }

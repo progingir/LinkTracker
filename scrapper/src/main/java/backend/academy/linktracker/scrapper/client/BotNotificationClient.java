@@ -16,15 +16,11 @@ public class BotNotificationClient {
     }
 
     public void sendUpdate(LinkUpdate update) {
-        log.atInfo()
-            .addKeyValue("link", update.url())
-            .log("Отправка уведомления в Бот");
+        log.atInfo().addKeyValue("link", update.url()).log("Отправка уведомления в Бот");
         try {
             restClient.post().uri("/updates").body(update).retrieve().toBodilessEntity();
         } catch (Exception e) {
-            log.atError()
-                .setCause(e)
-                .log("Не удалось доставить уведомление в Бот");
+            log.atError().setCause(e).log("Не удалось доставить уведомление в Бот");
         }
     }
 }
