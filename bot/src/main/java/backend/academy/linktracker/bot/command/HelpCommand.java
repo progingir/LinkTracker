@@ -34,8 +34,8 @@ public class HelpCommand implements Command {
         stateRepository.clear(chatId);
 
         String helpText = commandRegistry.getCommandsMetadata().entrySet().stream()
-            .map(entry -> entry.getKey() + " - " + entry.getValue())
-            .collect(Collectors.joining("\n", "Доступные команды:\n", ""));
+                .map(entry -> entry.getKey() + " - " + entry.getValue())
+                .collect(Collectors.joining("\n", "Доступные команды:\n", ""));
 
         return new SendMessage(chatId, helpText);
     }

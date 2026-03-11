@@ -26,8 +26,10 @@ public class StateRepository {
 
     public void setState(Long chatId, UserState state) {
         states.compute(
-            chatId,
-            (k, v) -> v == null ? new UserContext(state, null, null) : new UserContext(state, v.getPendingLink(), v.getPendingTags()));
+                chatId,
+                (k, v) -> v == null
+                        ? new UserContext(state, null, null)
+                        : new UserContext(state, v.getPendingLink(), v.getPendingTags()));
     }
 
     public void setPendingLink(Long chatId, URI link) {

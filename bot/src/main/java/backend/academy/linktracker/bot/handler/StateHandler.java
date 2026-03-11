@@ -7,5 +7,6 @@ import com.pengrad.telegrambot.request.SendMessage;
 
 public interface StateHandler {
     UserState getHandledState();
+
     SendMessage handle(Update update, StateRepository.UserContext context);
 }

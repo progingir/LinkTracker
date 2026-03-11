@@ -48,9 +48,7 @@ class ListCommandTest {
         ListCommand command = new ListCommand(client, stateRepository);
         long chatId = 1L;
 
-        var links = List.of(
-            new LinkResponse(1L, URI.create("http://test.com"), List.of("work"), List.of())
-        );
+        var links = List.of(new LinkResponse(1L, URI.create("http://test.com"), List.of("work"), List.of()));
         when(client.getLinks(chatId)).thenReturn(new ListLinksResponse(links, 1));
 
         Update update = mockUpdate(chatId, "/list");
@@ -72,9 +70,8 @@ class ListCommandTest {
         long chatId = 1L;
 
         var links = List.of(
-            new LinkResponse(1L, URI.create("http://github.com/job"), List.of("work"), List.of()),
-            new LinkResponse(2L, URI.create("http://github.com/play"), List.of("fun"), List.of())
-        );
+                new LinkResponse(1L, URI.create("http://github.com/job"), List.of("work"), List.of()),
+                new LinkResponse(2L, URI.create("http://github.com/play"), List.of("fun"), List.of()));
         when(client.getLinks(chatId)).thenReturn(new ListLinksResponse(links, 2));
 
         Update update = mockUpdate(chatId, "/list work");

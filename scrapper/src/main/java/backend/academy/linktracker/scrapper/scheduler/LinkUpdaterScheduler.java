@@ -36,16 +36,14 @@ public class LinkUpdaterScheduler {
             return;
         }
 
-        allLinks.stream()
-            .collect(Collectors.groupingBy(Link::url))
-            .forEach(this::processLinkGroup);
+        allLinks.stream().collect(Collectors.groupingBy(Link::url)).forEach(this::processLinkGroup);
     }
 
     private void processLinkGroup(URI url, List<Link> links) {
         OffsetDateTime lastCheck = links.stream()
-            .map(Link::lastUpdate)
-            .min(OffsetDateTime::compareTo)
-            .orElse(OffsetDateTime.now());
+                .map(Link::lastUpdate)
+                .min(OffsetDateTime::compareTo)
+                .orElse(OffsetDateTime.now());
 
         var githubInfo = linkParser.parseGithub(url);
         if (githubInfo != null) {
@@ -70,9 +68,7 @@ public class LinkUpdaterScheduler {
     }
 
     private void notifyBot(URI url, String description, List<Link> links) {
-        List<Long> chatIds = links.stream()
-            .map(Link::chatId)
-            .toList();
+        List<Long> chatIds = links.stream().map(Link::chatId).toList();
 
         Long linkId = links.isEmpty() ? 0L : links.get(0).id();
 

@@ -24,7 +24,9 @@ class TrackCommandTest {
 
         SendMessage response = command.handle(update);
 
-        assertEquals("Пришлите ссылку на ресурс, который хотите отслеживать:", response.getParameters().get("text"));
+        assertEquals(
+                "Пришлите ссылку на ресурс, который хотите отслеживать:",
+                response.getParameters().get("text"));
         verify(stateRepository).setState(chatId, UserState.WAITING_FOR_LINK);
     }
 

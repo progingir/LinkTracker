@@ -34,11 +34,18 @@ public class StartCommand implements Command {
 
         try {
             scrapperClient.registerChat(chatId);
-            log.atInfo().addKeyValue("chat_id", chatId).log("Чат успешно зарегистрирован");
+            log.atInfo()
+                .addKeyValue("chat_id", chatId)
+                .log("Чат успешно зарегистрирован");
         } catch (Exception e) {
-            log.atError().setCause(e).addKeyValue("chat_id", chatId).log("Ошибка при регистрации чата");
+            log.atError()
+                .setCause(e)
+                .addKeyValue("chat_id", chatId)
+                .log("Ошибка при регистрации чата");
         }
 
-        return new SendMessage(chatId, "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд");
+        return new SendMessage(
+                chatId,
+                "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд");
     }
 }

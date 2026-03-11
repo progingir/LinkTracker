@@ -15,10 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest(properties = {
-    "app.telegram.url=http://localhost:8080/",
-    "app.telegram.token=test_token"
-})
+@SpringBootTest(properties = {"app.telegram.url=http://localhost:8080/", "app.telegram.token=test_token"})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class BotControllerTest {
@@ -32,16 +29,19 @@ class BotControllerTest {
     @DisplayName("Тест 1: Корректный запрос /updates")
     void updatesCorrectRequest() throws Exception {
         var body = Map.of(
-            "id", 1,
-            "url", "http://github.com/user/repo",
-            "description", "Update detected",
-            "tgChatIds", List.of(12345L)
-        );
+                "id",
+                1,
+                "url",
+                "http://github.com/user/repo",
+                "description",
+                "Update detected",
+                "tgChatIds",
+                List.of(12345L));
 
         mockMvc.perform(post("/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(body)))
-            .andExpect(status().isOk());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -50,8 +50,8 @@ class BotControllerTest {
         var invalidBody = Map.of("id", 1);
 
         mockMvc.perform(post("/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidBody)))
-            .andExpect(status().isBadRequest());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidBody)))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -3,11 +3,9 @@ package backend.academy.linktracker.bot.service;
 import backend.academy.linktracker.bot.command.Command;
 import backend.academy.linktracker.bot.handler.StateHandler;
 import backend.academy.linktracker.bot.repository.StateRepository;
-import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
-import com.pengrad.telegrambot.response.SendResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,21 +16,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class BotService implements UpdatesListener {
 
-    private final TelegramBot telegramBot;
+    private final TelegramMessageSender messageSender;
     private final List<Command> commands;
     private final StateRepository stateRepository;
     private final Map<UserState, StateHandler> stateHandlers;
 
     public BotService(
-        TelegramBot telegramBot,
-        List<Command> commands,
-        StateRepository stateRepository,
-        List<StateHandler> handlers) {
-        this.telegramBot = telegramBot;
+            TelegramMessageSender messageSender,
+            List<Command> commands,
+            StateRepository stateRepository,
+            List<StateHandler> handlers) {
+        this.messageSender = messageSender;
         this.commands = commands;
         this.stateRepository = stateRepository;
-        this.stateHandlers = handlers.stream()
-            .collect(Collectors.toMap(StateHandler::getHandledState, h -> h));
+        this.stateHandlers = handlers.stream().collect(Collectors.toMap(StateHandler::getHandledState, h -> h));
     }
 
     @Override
@@ -47,13 +44,13 @@ public class BotService implements UpdatesListener {
 
                 if (response != null) {
                     Long userId = extractUserId(update);
-                    executeWithLogging(response, userId);
+                    messageSender.sendMessage(response, userId);
                 }
             } catch (Exception e) {
                 log.atError()
-                    .setCause(e)
-                    .addKeyValue("update_id", update.updateId())
-                    .log("Критический сбой при обработке обновления");
+                        .setCause(e)
+                        .addKeyValue("update_id", update.updateId())
+                        .log("Критический сбой при обработке обновления");
             }
         }
         return CONFIRMED_UPDATES_ALL;
@@ -64,12 +61,12 @@ public class BotService implements UpdatesListener {
 
         for (Long chatId : update.tgChatIds()) {
             try {
-                executeWithLogging(new SendMessage(chatId, messageText), chatId);
+                messageSender.sendMessage(new SendMessage(chatId, messageText), chatId);
             } catch (Exception e) {
                 log.atError()
-                    .setCause(e)
-                    .addKeyValue("chat_id", chatId)
-                    .log("Не удалось отправить уведомление об обновлении");
+                        .setCause(e)
+                        .addKeyValue("chat_id", chatId)
+                        .log("Не удалось отправить уведомление об обновлении");
             }
         }
     }
@@ -84,13 +81,13 @@ public class BotService implements UpdatesListener {
         if (text.startsWith("/")) {
             stateRepository.clear(chatId);
 
-            Command commandToExecute = commands.stream()
-                .filter(c -> c.supports(text))
-                .findFirst()
-                .orElse(null);
+            Command commandToExecute =
+                    commands.stream().filter(c -> c.supports(text)).findFirst().orElse(null);
 
             if (commandToExecute != null) {
-                log.atInfo().addKeyValue("command", commandToExecute.commandName()).log("Выполняю команду");
+                log.atInfo()
+                        .addKeyValue("command", commandToExecute.commandName())
+                        .log("Выполняю команду");
                 return commandToExecute.handle(update);
             } else {
                 return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список.");
@@ -101,44 +98,16 @@ public class BotService implements UpdatesListener {
         if (handler != null) {
             return handler.handle(update, context);
         } else {
-            log.atWarn().addKeyValue("user_id", userId).addKeyValue("text", text).log("Текст вне контекста");
-            return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
-        }
-    }
-
-    private void executeWithLogging(SendMessage message, Long userId) {
-        try {
-            SendResponse response = telegramBot.execute(message);
-
-            if (response.isOk()) {
-                log.atDebug().addKeyValue("user_id", userId).log("Сообщение успешно отправлено пользователю");
-            } else {
-                log.atError()
+            log.atWarn()
                     .addKeyValue("user_id", userId)
-                    .addKeyValue("description", response.description())
-                    .log("Ошибка API Телеграм для пользователя");
-            }
-        } catch (Throwable e) {
-            log.atError()
-                .setCause(e)
-                .addKeyValue("user_id", userId)
-                .log("Непредвиденная ошибка при отправке сообщения пользователю");
+                    .addKeyValue("text", text)
+                    .log("Текст вне контекста");
+            return new SendMessage(
+                    chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
         }
     }
 
     private Long extractUserId(Update update) {
         return (update.message().from() != null) ? update.message().from().id() : 0L;
     }
-
-    private String extractUsername(Update update) {
-        var from = update.message().from();
-        if (from == null) {
-            return "unknown";
-        }
-        if (from.username() != null) {
-            return from.username();
-        }
-        return from.firstName() != null ? from.firstName() : "id:" + from.id();
-    }
-
 }

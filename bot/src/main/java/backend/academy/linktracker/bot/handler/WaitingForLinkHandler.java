@@ -34,10 +34,13 @@ public class WaitingForLinkHandler implements StateHandler {
             stateRepository.setPendingLink(chatId, uri);
             stateRepository.setState(chatId, UserState.WAITING_FOR_TAGS);
 
-            return new SendMessage(chatId, "Ссылка принята. Введите теги через запятую (или отправьте 'нет', чтобы пропустить):");
+            return new SendMessage(
+                    chatId, "Ссылка принята. Введите теги через запятую (или отправьте 'нет', чтобы пропустить):");
 
         } catch (Exception e) {
-            return new SendMessage(chatId, "❌ Неверный формат ссылки. Пожалуйста, отправьте корректный URL (начинающийся с http/https).");
+            return new SendMessage(
+                    chatId,
+                    "❌ Неверный формат ссылки. Пожалуйста, отправьте корректный URL (начинающийся с http/https).");
         }
     }
 }

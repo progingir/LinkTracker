@@ -14,10 +14,14 @@ public class CancelCommand implements Command {
     private final StateRepository stateRepository;
 
     @Override
-    public String commandName() { return "/cancel"; }
+    public String commandName() {
+        return "/cancel";
+    }
 
     @Override
-    public String description() { return "Отменить текущую операцию"; }
+    public String description() {
+        return "Отменить текущую операцию";
+    }
 
     @Override
     public SendMessage handle(Update update) {

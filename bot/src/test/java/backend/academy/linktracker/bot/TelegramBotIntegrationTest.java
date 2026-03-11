@@ -51,10 +51,10 @@ class TelegramBotIntegrationTest implements WithAssertions {
     @DisplayName("Полный сценарий: получение команды /start и отправка ответа ботом")
     void fullCommandExecutionFlow() {
         stubFor(post(urlMatching("/bot[^/]+/getUpdates"))
-            .willReturn(aResponse()
-                .withStatus(200)
-                .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .withBody("""
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .withBody("""
                                 {
                                   "ok": true,
                                   "result": [
@@ -72,23 +72,23 @@ class TelegramBotIntegrationTest implements WithAssertions {
                                 """)));
 
         stubFor(post(urlMatching("/bot[^/]+/sendMessage"))
-            .willReturn(aResponse().withStatus(200).withBody("{\"ok\": true}")));
+                .willReturn(aResponse().withStatus(200).withBody("{\"ok\": true}")));
 
         telegramBot.setUpdatesListener(botService);
 
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
-                .withRequestBody(containing("chat_id=12345"))
-                .withRequestBody(containing("LinkTracker")));
+                    .withRequestBody(containing("chat_id=12345"))
+                    .withRequestBody(containing("LinkTracker")));
         });
     }
 
     @Test
     void nonExistingTokenRequest() {
         stubFor(post(urlMatching("/bot[^/]+/getUpdates"))
-            .willReturn(aResponse()
-                .withStatus(404)
-                .withBody("{\"ok\":false,\"error_code\":404,\"description\":\"Not Found\"}")));
+                .willReturn(aResponse()
+                        .withStatus(404)
+                        .withBody("{\"ok\":false,\"error_code\":404,\"description\":\"Not Found\"}")));
 
         var getUpdatesRequest = new GetUpdates();
         var getUpdatesResponse = telegramBot.execute(getUpdatesRequest);

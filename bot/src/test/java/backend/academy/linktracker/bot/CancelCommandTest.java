@@ -30,11 +30,13 @@ class CancelCommandTest {
         when(chat.id()).thenReturn(chatId);
 
         when(stateRepository.getContext(chatId))
-            .thenReturn(new StateRepository.UserContext(UserState.WAITING_FOR_LINK, null, null));
+                .thenReturn(new StateRepository.UserContext(UserState.WAITING_FOR_LINK, null, null));
 
         SendMessage response = command.handle(update);
 
-        assertEquals("🔄 Операция отменена. Я готов к новым командам.", response.getParameters().get("text"));
+        assertEquals(
+                "🔄 Операция отменена. Я готов к новым командам.",
+                response.getParameters().get("text"));
 
         verify(stateRepository).clear(chatId);
     }

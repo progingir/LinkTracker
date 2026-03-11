@@ -25,12 +25,16 @@ public class WaitingForTagsHandler implements StateHandler {
         String text = update.message().text().trim();
 
         List<String> tags = (text.equalsIgnoreCase("нет") || text.equals("-"))
-            ? List.of()
-            : Arrays.stream(text.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
+                ? List.of()
+                : Arrays.stream(text.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .toList();
 
         stateRepository.setPendingTags(chatId, tags);
         stateRepository.setState(chatId, UserState.WAITING_FOR_FILTERS);
 
-        return new SendMessage(chatId, "Теги приняты. Теперь введите фильтры через запятую (или отправьте 'нет', чтобы пропустить):");
+        return new SendMessage(
+                chatId, "Теги приняты. Теперь введите фильтры через запятую (или отправьте 'нет', чтобы пропустить):");
     }
 }

@@ -73,8 +73,7 @@ class BotStateMachineTest {
         stateRepository.setState(chatId, UserState.WAITING_FOR_FILTERS);
         stateRepository.setPendingLink(chatId, URI.create("https://github.com/user/repo"));
 
-        when(scrapperClient.addLink(anyLong(), any(), any(), any()))
-            .thenThrow(new RuntimeException("409 Conflict"));
+        when(scrapperClient.addLink(anyLong(), any(), any(), any())).thenThrow(new RuntimeException("409 Conflict"));
 
         Update update = mockUpdate("нет", chatId);
         SendMessage response = filtersHandler.handle(update, stateRepository.getContext(chatId));

@@ -30,8 +30,11 @@ public class WaitingForFiltersHandler implements StateHandler {
         List<String> tags = context.getPendingTags();
 
         List<String> filters = (text.equalsIgnoreCase("нет") || text.equals("-"))
-            ? List.of()
-            : Arrays.stream(text.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
+                ? List.of()
+                : Arrays.stream(text.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .toList();
 
         try {
             scrapperClient.addLink(chatId, link, tags, filters);

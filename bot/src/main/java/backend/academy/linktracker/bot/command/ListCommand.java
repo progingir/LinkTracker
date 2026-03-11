@@ -35,7 +35,8 @@ public class ListCommand implements Command {
         try {
             ListLinksResponse response = scrapperClient.getLinks(chatId);
             if (response.links().isEmpty()) {
-                return new SendMessage(chatId, "Ваш список отслеживания пуст. Используйте /track, чтобы добавить ссылку.");
+                return new SendMessage(
+                        chatId, "Ваш список отслеживания пуст. Используйте /track, чтобы добавить ссылку.");
             }
 
             String[] parts = messageText.split("\\s+", 2);
@@ -45,8 +46,8 @@ public class ListCommand implements Command {
 
             if (filterTag != null && !filterTag.isEmpty()) {
                 linksToShow = linksToShow.stream()
-                    .filter(link -> link.tags() != null && link.tags().contains(filterTag))
-                    .toList();
+                        .filter(link -> link.tags() != null && link.tags().contains(filterTag))
+                        .toList();
 
                 if (linksToShow.isEmpty()) {
                     return new SendMessage(chatId, "По тегу '" + filterTag + "' ссылок не найдено.");
@@ -54,12 +55,16 @@ public class ListCommand implements Command {
             }
 
             String listText = linksToShow.stream()
-                .map(link -> "• " + link.url() + (link.tags() == null || link.tags().isEmpty() ? "" : " (теги: " + String.join(", ", link.tags()) + ")"))
-                .collect(Collectors.joining("\n", "Вы отслеживаете следующие ресурсы:\n", ""));
+                    .map(link -> "• " + link.url()
+                            + (link.tags() == null || link.tags().isEmpty()
+                                    ? ""
+                                    : " (теги: " + String.join(", ", link.tags()) + ")"))
+                    .collect(Collectors.joining("\n", "Вы отслеживаете следующие ресурсы:\n", ""));
 
             return new SendMessage(chatId, listText);
         } catch (Exception e) {
-            return new SendMessage(chatId, "❌ Не удалось получить список. Возможно, вы еще не зарегистрированы? Введите /start");
+            return new SendMessage(
+                    chatId, "❌ Не удалось получить список. Возможно, вы еще не зарегистрированы? Введите /start");
         }
     }
 }

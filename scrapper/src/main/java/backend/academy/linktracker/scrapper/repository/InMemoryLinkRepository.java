@@ -39,12 +39,12 @@ public class InMemoryLinkRepository implements LinkRepository {
             }
 
             Link newLink = new Link(
-                linkIdGenerator.getAndIncrement(),
-                chatId,
-                url,
-                tags != null ? tags : List.of(),
-                filters != null ? filters : List.of(),
-                OffsetDateTime.now());
+                    linkIdGenerator.getAndIncrement(),
+                    chatId,
+                    url,
+                    tags != null ? tags : List.of(),
+                    filters != null ? filters : List.of(),
+                    OffsetDateTime.now());
 
             links.add(newLink);
             result.set(Optional.of(newLink));
@@ -87,9 +87,7 @@ public class InMemoryLinkRepository implements LinkRepository {
 
     @Override
     public List<Link> findAll() {
-        return chatLinks.values().stream()
-            .flatMap(List::stream)
-            .toList();
+        return chatLinks.values().stream().flatMap(List::stream).toList();
     }
 
     @Override

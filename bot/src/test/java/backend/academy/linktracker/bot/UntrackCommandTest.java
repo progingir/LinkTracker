@@ -29,7 +29,9 @@ class UntrackCommandTest {
 
         SendMessage response = command.handle(update);
 
-        assertEquals("Пришлите ссылку, которую хотите перестать отслеживать:", response.getParameters().get("text"));
+        assertEquals(
+                "Пришлите ссылку, которую хотите перестать отслеживать:",
+                response.getParameters().get("text"));
         verify(stateRepository).setState(chatId, UserState.WAITING_FOR_UNTRACK_LINK);
     }
 }

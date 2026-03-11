@@ -21,68 +21,81 @@ public class HttpScrapperClient implements ScrapperClient {
 
     public HttpScrapperClient(TelegramProperties properties) {
         this.restClient = RestClient.builder()
-            .baseUrl(properties.getScrapperUrl())
-            .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
-                throw new ScrapperApiException(response.getStatusCode().value(), "Ошибка API Scrapper: " + response.getStatusCode());
-            })
-            .build();
+                .baseUrl(properties.getScrapperUrl())
+                .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
+                    throw new ScrapperApiException(
+                            response.getStatusCode().value(), "Ошибка API Scrapper: " + response.getStatusCode());
+                })
+                .build();
     }
 
     @Override
     public void registerChat(Long chatId) {
-        log.atInfo().addKeyValue("chat_id", chatId).log("Отправка запроса на регистрацию чата в Scrapper");
+        log.atInfo()
+            .addKeyValue("chat_id", chatId)
+            .log("Отправка запроса на регистрацию чата в Scrapper");
 
         restClient
-            .post()
-            .uri("/tg-chat/{id}", chatId)
-            .retrieve()
-            .onStatus(status -> status == HttpStatus.CONFLICT, (request, response) -> {
-                log.atInfo().addKeyValue("chat_id", chatId).log("Чат уже был зарегистрирован ранее");
-            })
-            .toBodilessEntity();
+                .post()
+                .uri("/tg-chat/{id}", chatId)
+                .retrieve()
+                .onStatus(status -> status == HttpStatus.CONFLICT, (request, response) -> {
+                    log.atInfo()
+                        .addKeyValue("chat_id", chatId)
+                        .log("Чат уже был зарегистрирован ранее");
+                })
+                .toBodilessEntity();
     }
 
     @Override
     public void deleteChat(Long chatId) {
-        log.atInfo().addKeyValue("chat_id", chatId).log("Отправка запроса на удаление чата из Scrapper");
+        log.atInfo()
+            .addKeyValue("chat_id", chatId)
+            .log("Отправка запроса на удаление чата из Scrapper");
         restClient.delete().uri("/tg-chat/{id}", chatId).retrieve().toBodilessEntity();
     }
 
     @Override
     public ListLinksResponse getLinks(Long chatId) {
-        log.atInfo().addKeyValue("chat_id", chatId).log("Запрос списка ссылок из Scrapper");
+        log.atInfo()
+            .addKeyValue("chat_id", chatId)
+            .log("Запрос списка ссылок из Scrapper");
         return restClient
-            .get()
-            .uri("/links")
-            .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
-            .retrieve()
-            .body(ListLinksResponse.class);
+                .get()
+                .uri("/links")
+                .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
+                .retrieve()
+                .body(ListLinksResponse.class);
     }
 
     @Override
     public LinkResponse addLink(Long chatId, URI link, List<String> tags, List<String> filters) {
-        log.atInfo().addKeyValue("chat_id", chatId).addKeyValue("link", link).log("Отправка запроса на добавление ссылки");
-        return restClient.post()
-            .uri("/links")
-            .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
-            .body(new AddLinkRequest(link, tags, filters))
-            .retrieve()
-            .body(LinkResponse.class);
+        log.atInfo()
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("link", link)
+                .log("Отправка запроса на добавление ссылки");
+        return restClient
+                .post()
+                .uri("/links")
+                .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
+                .body(new AddLinkRequest(link, tags, filters))
+                .retrieve()
+                .body(LinkResponse.class);
     }
 
     @Override
     public LinkResponse removeLink(Long chatId, URI link) {
         log.atInfo()
-            .addKeyValue("chat_id", chatId)
-            .addKeyValue("link", link)
-            .log("Отправка запроса на удаление ссылки из Scrapper");
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("link", link)
+                .log("Отправка запроса на удаление ссылки из Scrapper");
 
         return restClient
-            .method(HttpMethod.DELETE)
-            .uri("/links")
-            .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
-            .body(new RemoveLinkRequest(link))
-            .retrieve()
-            .body(LinkResponse.class);
+                .method(HttpMethod.DELETE)
+                .uri("/links")
+                .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
+                .body(new RemoveLinkRequest(link))
+                .retrieve()
+                .body(LinkResponse.class);
     }
 }

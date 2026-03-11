@@ -21,10 +21,17 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @SpringBootTest
 class LinkUpdaterSchedulerTest {
 
-    @MockitoBean private LinkRepository linkRepository;
-    @MockitoBean private GitHubClient gitHubClient;
-    @MockitoBean private BotNotificationClient botClient;
-    @MockitoBean private LinkParser linkParser;
+    @MockitoBean
+    private LinkRepository linkRepository;
+
+    @MockitoBean
+    private GitHubClient gitHubClient;
+
+    @MockitoBean
+    private BotNotificationClient botClient;
+
+    @MockitoBean
+    private LinkParser linkParser;
 
     @Test
     @DisplayName("Сценарий 7: Уведомление отправляется только подписчикам")
@@ -39,17 +46,20 @@ class LinkUpdaterSchedulerTest {
         when(linkParser.parseGithub(url)).thenReturn(new LinkParser.GithubInfo("user", "repo"));
 
         when(gitHubClient.fetchRepository("user", "repo"))
-            .thenReturn(Optional.of(new GitHubResponse("repo", now, now)));
+                .thenReturn(Optional.of(new GitHubResponse("repo", now, now)));
 
         LinkUpdaterScheduler scheduler = new LinkUpdaterScheduler(
-            linkRepository, gitHubClient, mock(backend.academy.linktracker.scrapper.client.StackOverflowClient.class),
-            linkParser, botClient);
+                linkRepository,
+                gitHubClient,
+                mock(backend.academy.linktracker.scrapper.client.StackOverflowClient.class),
+                linkParser,
+                botClient);
 
         scheduler.update();
 
-        verify(botClient).sendUpdate(argThat(update ->
-            update.tgChatIds().containsAll(List.of(100L, 200L)) && update.tgChatIds().size() == 2
-        ));
+        verify(botClient)
+                .sendUpdate(argThat(update -> update.tgChatIds().containsAll(List.of(100L, 200L))
+                        && update.tgChatIds().size() == 2));
     }
 
     @Test
@@ -64,8 +74,11 @@ class LinkUpdaterSchedulerTest {
         when(gitHubClient.fetchRepository(anyString(), anyString())).thenReturn(Optional.empty());
 
         LinkUpdaterScheduler scheduler = new LinkUpdaterScheduler(
-            linkRepository, gitHubClient, mock(backend.academy.linktracker.scrapper.client.StackOverflowClient.class),
-            linkParser, botClient);
+                linkRepository,
+                gitHubClient,
+                mock(backend.academy.linktracker.scrapper.client.StackOverflowClient.class),
+                linkParser,
+                botClient);
 
         scheduler.update();
 

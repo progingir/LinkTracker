@@ -45,9 +45,8 @@ class StartCommandTest {
 
         assertEquals(123L, response.getParameters().get("chat_id"));
         assertEquals(
-            "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд",
-            response.getParameters().get("text"));
-
+                "Привет! Я LinkTracker, помогу тебе следить за обновлениями контента. Введи /help для списка команд",
+                response.getParameters().get("text"));
     }
 
     @Test

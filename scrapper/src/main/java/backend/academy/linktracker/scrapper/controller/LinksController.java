@@ -28,7 +28,9 @@ public class LinksController {
 
     @GetMapping
     public ListLinksResponse getLinks(@RequestHeader("Tg-Chat-Id") Long tgChatId) {
-        log.atInfo().addKeyValue("chat_id", tgChatId).log("Запрос на получение списка отслеживаемых ссылок");
+        log.atInfo()
+            .addKeyValue("chat_id", tgChatId)
+            .log("Запрос на получение списка отслеживаемых ссылок");
 
         List<Link> links = linkService.getLinks(tgChatId);
 

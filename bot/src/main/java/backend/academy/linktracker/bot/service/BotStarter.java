@@ -38,7 +38,9 @@ public class BotStarter implements ApplicationRunner {
         var response = telegramBot.execute(setMyCommands);
 
         if (response.isOk()) {
-            log.atInfo().addKeyValue("commands_count", commands.size()).log("Меню команд успешно зарегистрировано");
+            log.atInfo()
+                .addKeyValue("commands_count", commands.size())
+                .log("Меню команд успешно зарегистрировано");
         } else {
             log.atError()
                     .addKeyValue("error_code", response.errorCode())
