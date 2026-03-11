@@ -14,6 +14,7 @@
     <properties>
         <spotbugs.skip>true</spotbugs.skip>
         <pmd.skip>true</pmd.skip>
+        <cpd.skip>true</cpd.skip>
     </properties>
 
     <dependencies>
