@@ -6,11 +6,11 @@ import backend.academy.linktracker.scrapper.service.LinkService;
 import backend.academy.linktracker.scrapper.service.TgChatService;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import java.net.URI;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import java.net.URI;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -24,7 +24,8 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
     public void registerChat(ChatRequest request, StreamObserver<Empty> responseObserver) {
         if (request.getId() <= 0) {
             responseObserver.onError(Status.INVALID_ARGUMENT
-                .withDescription("ID чата должен быть положительным").asRuntimeException());
+                    .withDescription("ID чата должен быть положительным")
+                    .asRuntimeException());
             return;
         }
         tgChatService.registerChat(request.getId());
@@ -35,7 +36,8 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
     @Override
     public void deleteChat(ChatRequest request, StreamObserver<Empty> responseObserver) {
         if (request.getId() <= 0) {
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("ID чата невалиден").asRuntimeException());
+            responseObserver.onError(
+                    Status.INVALID_ARGUMENT.withDescription("ID чата невалиден").asRuntimeException());
             return;
         }
         tgChatService.deleteChat(request.getId());
@@ -46,13 +48,16 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
     @Override
     public void getLinks(ChatRequest request, StreamObserver<ListLinksResponseMsg> responseObserver) {
         if (request.getId() <= 0) {
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("ID чата невалиден").asRuntimeException());
+            responseObserver.onError(
+                    Status.INVALID_ARGUMENT.withDescription("ID чата невалиден").asRuntimeException());
             return;
         }
         List<Link> links = linkService.getLinks(request.getId());
         List<LinkResponseMsg> messages = links.stream().map(this::mapToMsg).toList();
         responseObserver.onNext(ListLinksResponseMsg.newBuilder()
-            .addAllLinks(messages).setSize(messages.size()).build());
+                .addAllLinks(messages)
+                .setSize(messages.size())
+                .build());
         responseObserver.onCompleted();
     }
 
@@ -60,14 +65,19 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
     public void addLink(AddLinkRequestMsg request, StreamObserver<LinkResponseMsg> responseObserver) {
         try {
             validateLinkRequest(request.getChatId(), request.getLink());
-            Link link = linkService.addLink(request.getChatId(), URI.create(request.getLink()),
-                request.getTagsList(), request.getFiltersList());
+            Link link = linkService.addLink(
+                    request.getChatId(),
+                    URI.create(request.getLink()),
+                    request.getTagsList(),
+                    request.getFiltersList());
             responseObserver.onNext(mapToMsg(link));
             responseObserver.onCompleted();
         } catch (IllegalArgumentException e) {
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
         } catch (Exception e) {
-            responseObserver.onError(Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
         }
     }
 
@@ -79,9 +89,11 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
             responseObserver.onNext(mapToMsg(link));
             responseObserver.onCompleted();
         } catch (IllegalArgumentException e) {
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
         } catch (Exception e) {
-            responseObserver.onError(Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(
+                    Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
         }
     }
 
@@ -97,7 +109,10 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
 
     private LinkResponseMsg mapToMsg(Link link) {
         return LinkResponseMsg.newBuilder()
-            .setId(link.id()).setUrl(link.url().toString())
-            .addAllTags(link.tags()).addAllFilters(link.filters()).build();
+                .setId(link.id())
+                .setUrl(link.url().toString())
+                .addAllTags(link.tags())
+                .addAllFilters(link.filters())
+                .build();
     }
 }
