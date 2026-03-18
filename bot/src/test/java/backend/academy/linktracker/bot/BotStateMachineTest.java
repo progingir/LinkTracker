@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
+import backend.academy.linktracker.bot.exception.ResourceAlreadyExistsException;
 import backend.academy.linktracker.bot.handler.WaitingForFiltersHandler;
 import backend.academy.linktracker.bot.handler.WaitingForLinkHandler;
 import backend.academy.linktracker.bot.handler.WaitingForTagsHandler;
@@ -73,7 +74,8 @@ class BotStateMachineTest {
         stateRepository.setState(chatId, UserState.WAITING_FOR_FILTERS);
         stateRepository.setPendingLink(chatId, URI.create("https://github.com/user/repo"));
 
-        when(scrapperClient.addLink(anyLong(), any(), any(), any())).thenThrow(new RuntimeException("409 Conflict"));
+        when(scrapperClient.addLink(any(), any(), any(), any()))
+                .thenThrow(new ResourceAlreadyExistsException("Ссылка уже отслеживается"));
 
         Update update = mockUpdate("нет", chatId);
         SendMessage response = filtersHandler.handle(update, stateRepository.getContext(chatId));

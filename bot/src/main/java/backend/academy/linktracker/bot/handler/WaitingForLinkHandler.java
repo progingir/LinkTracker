@@ -6,8 +6,10 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class WaitingForLinkHandler implements StateHandler {
@@ -22,13 +24,15 @@ public class WaitingForLinkHandler implements StateHandler {
     @Override
     public SendMessage handle(Update update, StateRepository.UserContext context) {
         long chatId = update.message().chat().id();
-        String text = update.message().text().trim();
+        String text = update.message().text();
 
         try {
             URI uri = URI.create(text);
 
             if (uri.getScheme() == null || !uri.getScheme().startsWith("http")) {
-                throw new IllegalArgumentException();
+                return new SendMessage(
+                        chatId,
+                        "❌ Неверный формат ссылки. Пожалуйста, отправьте корректный URL (начинающийся с http/https).");
             }
 
             stateRepository.setPendingLink(chatId, uri);
@@ -37,10 +41,19 @@ public class WaitingForLinkHandler implements StateHandler {
             return new SendMessage(
                     chatId, "Ссылка принята. Введите теги через запятую (или отправьте 'нет', чтобы пропустить):");
 
+        } catch (IllegalArgumentException e) {
+            return new SendMessage(chatId, "❌ Неверный формат ссылки. Проверьте корректность URL.");
+
         } catch (Exception e) {
-            return new SendMessage(
-                    chatId,
-                    "❌ Неверный формат ссылки. Пожалуйста, отправьте корректный URL (начинающийся с http/https).");
+            log.atError()
+                    .setCause(e)
+                    .addKeyValue("chat_id", chatId)
+                    .addKeyValue("input_text", text)
+                    .log("Критическая ошибка при обработке ссылки");
+
+            stateRepository.clear(chatId);
+
+            return new SendMessage(chatId, "❌ Произошла внутренняя ошибка сервера. Попробуйте позже.");
         }
     }
 }

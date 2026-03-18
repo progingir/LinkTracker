@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Primary;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-@Primary
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "app", name = "scrapper-client-type", havingValue = "grpc", matchIfMissing = true)
 public class GrpcScrapperClient implements ScrapperClient {
 
     private final ScrapperServiceGrpc.ScrapperServiceBlockingStub stub;
@@ -30,7 +30,7 @@ public class GrpcScrapperClient implements ScrapperClient {
             stub.withDeadlineAfter(deadline.toMillis(), TimeUnit.MILLISECONDS)
                     .registerChat(ChatRequest.newBuilder().setId(chatId).build());
         } catch (StatusRuntimeException e) {
-            handleGrpcError(e);
+            throw getGrpcError(e);
         }
     }
 
@@ -40,7 +40,7 @@ public class GrpcScrapperClient implements ScrapperClient {
             stub.withDeadlineAfter(deadline.toMillis(), TimeUnit.MILLISECONDS)
                     .deleteChat(ChatRequest.newBuilder().setId(chatId).build());
         } catch (StatusRuntimeException e) {
-            handleGrpcError(e);
+            throw getGrpcError(e);
         }
     }
 
@@ -55,8 +55,7 @@ public class GrpcScrapperClient implements ScrapperClient {
                     .toList();
             return new ListLinksResponse(links, res.getSize());
         } catch (StatusRuntimeException e) {
-            handleGrpcError(e);
-            return null;
+            throw getGrpcError(e);
         }
     }
 
@@ -72,8 +71,7 @@ public class GrpcScrapperClient implements ScrapperClient {
                             .build());
             return new LinkResponse(res.getId(), URI.create(res.getUrl()), res.getTagsList(), res.getFiltersList());
         } catch (StatusRuntimeException e) {
-            handleGrpcError(e);
-            return null;
+            throw getGrpcError(e);
         }
     }
 
@@ -87,18 +85,17 @@ public class GrpcScrapperClient implements ScrapperClient {
                             .build());
             return new LinkResponse(res.getId(), URI.create(res.getUrl()), res.getTagsList(), res.getFiltersList());
         } catch (StatusRuntimeException e) {
-            handleGrpcError(e);
-            return null;
+            throw getGrpcError(e);
         }
     }
 
-    private void handleGrpcError(StatusRuntimeException e) {
+    private RuntimeException getGrpcError(StatusRuntimeException e) {
         Status.Code code = e.getStatus().getCode();
         if (code == Status.Code.NOT_FOUND) {
-            throw new ResourceNotFoundException("Ресурс не найден: " + e.getMessage());
+            return new ResourceNotFoundException("Ресурс не найден: " + e.getMessage());
         } else if (code == Status.Code.ALREADY_EXISTS) {
-            throw new ResourceAlreadyExistsException("Ресурс уже существует: " + e.getMessage());
+            return new ResourceAlreadyExistsException("Ресурс уже существует: " + e.getMessage());
         }
-        throw new ScrapperException("Ошибка gRPC: " + code + ". " + e.getMessage());
+        return new ScrapperException("Ошибка gRPC: " + code + ". " + e.getMessage());
     }
 }

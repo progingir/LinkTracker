@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot.command;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
+import backend.academy.linktracker.bot.exception.ResourceAlreadyExistsException;
 import backend.academy.linktracker.bot.repository.StateRepository;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -35,6 +36,8 @@ public class StartCommand implements Command {
         try {
             scrapperClient.registerChat(chatId);
             log.atInfo().addKeyValue("chat_id", chatId).log("Чат успешно зарегистрирован");
+        } catch (ResourceAlreadyExistsException e) {
+            log.atInfo().addKeyValue("chat_id", chatId).log("Пользователь уже был зарегистрирован ранее");
         } catch (Exception e) {
             log.atError().setCause(e).addKeyValue("chat_id", chatId).log("Ошибка при регистрации чата");
         }

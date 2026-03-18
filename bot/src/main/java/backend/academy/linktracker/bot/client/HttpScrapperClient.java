@@ -1,93 +1,95 @@
 package backend.academy.linktracker.bot.client;
 
 import backend.academy.linktracker.bot.dto.*;
-import backend.academy.linktracker.bot.exception.ScrapperApiException;
-import backend.academy.linktracker.bot.properties.TelegramProperties;
+import backend.academy.linktracker.bot.exception.ResourceAlreadyExistsException;
+import backend.academy.linktracker.bot.exception.ResourceNotFoundException;
 import java.net.URI;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "app", name = "scrapper-client-type", havingValue = "http")
 public class HttpScrapperClient implements ScrapperClient {
 
-    private final RestClient restClient;
+    private final RestClient scrapperRestClient;
     private static final String TG_CHAT_ID_HEADER = "Tg-Chat-Id";
-
-    public HttpScrapperClient(TelegramProperties properties) {
-        this.restClient = RestClient.builder()
-                .baseUrl(properties.getScrapperUrl())
-                .defaultStatusHandler(HttpStatusCode::isError, (request, response) -> {
-                    throw new ScrapperApiException(
-                            response.getStatusCode().value(), "Ошибка API Scrapper: " + response.getStatusCode());
-                })
-                .build();
-    }
 
     @Override
     public void registerChat(Long chatId) {
         log.atInfo().addKeyValue("chat_id", chatId).log("Отправка запроса на регистрацию чата в Scrapper");
 
-        restClient
+        scrapperRestClient
                 .post()
                 .uri("/tg-chat/{id}", chatId)
                 .retrieve()
                 .onStatus(status -> status == HttpStatus.CONFLICT, (request, response) -> {
-                    log.atInfo().addKeyValue("chat_id", chatId).log("Чат уже был зарегистрирован ранее");
+                    throw new ResourceAlreadyExistsException("Чат " + chatId + " уже зарегистрирован");
+                })
+                .toBodilessEntity();
+        log.atInfo().addKeyValue("chat_id", chatId).log("Чат успешно зарегистрирован");
+    }
+
+    @Override
+    public void deleteChat(Long chatId) {
+        scrapperRestClient
+                .delete()
+                .uri("/tg-chat/{id}", chatId)
+                .retrieve()
+                .onStatus(status -> status == HttpStatus.NOT_FOUND, (req, res) -> {
+                    throw new ResourceNotFoundException("Чат не найден: " + chatId);
                 })
                 .toBodilessEntity();
     }
 
     @Override
-    public void deleteChat(Long chatId) {
-        log.atInfo().addKeyValue("chat_id", chatId).log("Отправка запроса на удаление чата из Scrapper");
-        restClient.delete().uri("/tg-chat/{id}", chatId).retrieve().toBodilessEntity();
-    }
-
-    @Override
     public ListLinksResponse getLinks(Long chatId) {
-        log.atInfo().addKeyValue("chat_id", chatId).log("Запрос списка ссылок из Scrapper");
-        return restClient
+        return scrapperRestClient
                 .get()
                 .uri("/links")
                 .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
                 .retrieve()
+                .onStatus(status -> status == HttpStatus.NOT_FOUND, (req, res) -> {
+                    throw new ResourceNotFoundException("Чат не найден: " + chatId);
+                })
                 .body(ListLinksResponse.class);
     }
 
     @Override
     public LinkResponse addLink(Long chatId, URI link, List<String> tags, List<String> filters) {
-        log.atInfo()
-                .addKeyValue("chat_id", chatId)
-                .addKeyValue("link", link)
-                .log("Отправка запроса на добавление ссылки");
-        return restClient
+        return scrapperRestClient
                 .post()
                 .uri("/links")
                 .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
                 .body(new AddLinkRequest(link, tags, filters))
                 .retrieve()
+                .onStatus(status -> status == HttpStatus.NOT_FOUND, (req, res) -> {
+                    throw new ResourceNotFoundException("Чат не найден: " + chatId);
+                })
+                .onStatus(status -> status == HttpStatus.CONFLICT, (req, res) -> {
+                    throw new ResourceAlreadyExistsException("Ссылка уже отслеживается");
+                })
                 .body(LinkResponse.class);
     }
 
     @Override
     public LinkResponse removeLink(Long chatId, URI link) {
-        log.atInfo()
-                .addKeyValue("chat_id", chatId)
-                .addKeyValue("link", link)
-                .log("Отправка запроса на удаление ссылки из Scrapper");
-
-        return restClient
+        return scrapperRestClient
                 .method(HttpMethod.DELETE)
                 .uri("/links")
                 .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
                 .body(new RemoveLinkRequest(link))
                 .retrieve()
+                .onStatus(status -> status == HttpStatus.NOT_FOUND, (req, res) -> {
+                    throw new ResourceNotFoundException("Ссылка или чат не найдены");
+                })
                 .body(LinkResponse.class);
     }
 }

@@ -1,6 +1,8 @@
 package backend.academy.linktracker.bot.handler;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
+import backend.academy.linktracker.bot.exception.ResourceAlreadyExistsException;
+import backend.academy.linktracker.bot.exception.ResourceNotFoundException;
 import backend.academy.linktracker.bot.repository.StateRepository;
 import backend.academy.linktracker.bot.service.UserState;
 import com.pengrad.telegrambot.model.Update;
@@ -9,11 +11,14 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class WaitingForFiltersHandler implements StateHandler {
+
     private final ScrapperClient scrapperClient;
     private final StateRepository stateRepository;
 
@@ -40,14 +45,27 @@ public class WaitingForFiltersHandler implements StateHandler {
             scrapperClient.addLink(chatId, link, tags, filters);
             stateRepository.clear(chatId);
             return new SendMessage(chatId, "✅ Ссылка успешно добавлена со всеми настройками!");
+
+        } catch (ResourceNotFoundException e) {
+            stateRepository.clear(chatId);
+            log.atInfo()
+                    .addKeyValue("chat_id", chatId)
+                    .log("Попытка добавления ссылки незарегистрированным пользователем");
+            return new SendMessage(chatId, "❌ Ошибка: вы еще не зарегистрированы. Введите /start");
+
+        } catch (ResourceAlreadyExistsException e) {
+            stateRepository.clear(chatId);
+            return new SendMessage(chatId, "⚠️ Эта ссылка уже отслеживается в вашем списке.");
+
         } catch (Exception e) {
             stateRepository.clear(chatId);
 
-            if (e.getMessage() != null && e.getMessage().contains("404")) {
-                return new SendMessage(chatId, "❌ Ошибка: вы еще не зарегистрированы. Введите /start");
-            }
+            log.atError()
+                    .setCause(e)
+                    .addKeyValue("chat_id", chatId)
+                    .log("Непредвиденная ошибка при добавлении ссылки в Scrapper");
 
-            return new SendMessage(chatId, "Ссылка уже отслеживается");
+            return new SendMessage(chatId, "❌ Произошла техническая ошибка на сервере. Попробуйте позже.");
         }
     }
 }
