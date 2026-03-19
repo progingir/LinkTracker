@@ -1,7 +1,6 @@
 package backend.academy.linktracker.scrapper.client;
 
 import backend.academy.linktracker.scrapper.dto.GitHubResponse;
-import backend.academy.linktracker.scrapper.properties.GithubProperties;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -12,8 +11,8 @@ import org.springframework.web.client.RestClient;
 public class GitHubClient {
     private final RestClient restClient;
 
-    public GitHubClient(RestClient.Builder builder, GithubProperties properties) {
-        this.restClient = builder.baseUrl(properties.getUrl()).build();
+    public GitHubClient(RestClient githubRestClient) {
+        this.restClient = githubRestClient;
     }
 
     public Optional<GitHubResponse> fetchRepository(String owner, String repo) {
@@ -24,7 +23,11 @@ public class GitHubClient {
                     .retrieve()
                     .body(GitHubResponse.class));
         } catch (Exception e) {
-            log.atError().setCause(e).log("Ошибка при вызове GitHub API");
+            log.atError()
+                    .setCause(e)
+                    .addKeyValue("owner", owner)
+                    .addKeyValue("repo", repo)
+                    .log("Ошибка при вызове GitHub API");
             return Optional.empty();
         }
     }

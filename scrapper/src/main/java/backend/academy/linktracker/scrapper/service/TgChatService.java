@@ -15,15 +15,25 @@ public class TgChatService {
     private final LinkRepository linkRepository;
 
     public void registerChat(Long chatId) {
-        if (!tgChatRepository.addChat(chatId)) {
+        validateId(chatId);
+        if (tgChatRepository.existsChat(chatId)) {
             throw new ChatAlreadyExistsException(chatId);
         }
+        tgChatRepository.addChat(chatId);
     }
 
     public void deleteChat(Long chatId) {
-        if (!tgChatRepository.removeChat(chatId)) {
+        validateId(chatId);
+        if (!tgChatRepository.existsChat(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
+        tgChatRepository.removeChat(chatId);
         linkRepository.removeAllByChatId(chatId);
+    }
+
+    private void validateId(Long chatId) {
+        if (chatId == null || chatId <= 0) {
+            throw new IllegalArgumentException("ID чата должен быть положительным числом");
+        }
     }
 }

@@ -10,13 +10,13 @@ public class InMemoryTgChatRepository implements TgChatRepository {
     private final Set<Long> chats = ConcurrentHashMap.newKeySet();
 
     @Override
-    public boolean addChat(Long chatId) {
-        return chats.add(chatId);
+    public void addChat(Long chatId) {
+        chats.add(chatId);
     }
 
     @Override
-    public boolean removeChat(Long chatId) {
-        return chats.remove(chatId);
+    public void removeChat(Long chatId) {
+        chats.remove(chatId);
     }
 
     @Override

@@ -29,14 +29,29 @@ public class LinkUpdaterScheduler {
 
     @Scheduled(fixedDelayString = "${app.scheduler.interval:30s}")
     public void update() {
-        log.info("Начало фоновой проверки обновлений...");
+        log.atInfo().log("Начало фоновой проверки обновлений...");
 
         List<Link> allLinks = linkRepository.findAll();
+
         if (allLinks.isEmpty()) {
+            log.atInfo().log("Фоновая проверка завершена: список ссылок пуст.");
             return;
         }
 
-        allLinks.stream().collect(Collectors.groupingBy(Link::url)).forEach(this::processLinkGroup);
+        var linkGroups = allLinks.stream().collect(Collectors.groupingBy(Link::url));
+
+        for (var entry : linkGroups.entrySet()) {
+            try {
+                processLinkGroup(entry.getKey(), entry.getValue());
+            } catch (Exception e) {
+                log.atError().setCause(e).addKeyValue("url", entry.getKey()).log("Ошибка при обработке группы ссылок");
+            }
+        }
+
+        log.atInfo()
+                .addKeyValue("total_urls", linkGroups.size())
+                .addKeyValue("total_subscriptions", allLinks.size())
+                .log("Фоновая проверка обновлений успешно завершена.");
     }
 
     private void processLinkGroup(URI url, List<Link> links) {

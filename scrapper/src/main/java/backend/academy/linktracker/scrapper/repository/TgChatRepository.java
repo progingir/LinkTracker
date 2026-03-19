@@ -1,9 +1,9 @@
 package backend.academy.linktracker.scrapper.repository;
 
 public interface TgChatRepository {
-    boolean addChat(Long chatId);
+    void addChat(Long chatId);
 
-    boolean removeChat(Long chatId);
+    void removeChat(Long chatId);
 
     boolean existsChat(Long chatId);
 }

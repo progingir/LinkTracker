@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.bot.handler.WaitingForLinkHandler;
 import backend.academy.linktracker.bot.repository.StateRepository;
+import backend.academy.linktracker.bot.service.LinkValidator;
 import backend.academy.linktracker.bot.service.UserState;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -15,19 +16,34 @@ import org.junit.jupiter.api.Test;
 class BotFunctionalTest {
 
     @Test
-    @DisplayName("Валидация ссылки в /track (корректная vs некорректная)")
-    void trackLinkValidation() {
+    @DisplayName("Валидация ссылки в /track: некорректная ссылка")
+    void trackLinkInvalidValidation() {
         StateRepository stateRepository = mock(StateRepository.class);
-        WaitingForLinkHandler handler = new WaitingForLinkHandler(stateRepository);
+        LinkValidator linkValidator = new LinkValidator();
+        WaitingForLinkHandler handler = new WaitingForLinkHandler(stateRepository, linkValidator);
 
         long chatId = 123L;
 
         Update invalidUpdate = mockUpdate("tbank://invalid", chatId);
         SendMessage failResponse = handler.handle(invalidUpdate, null);
+
         assertTrue(((String) failResponse.getParameters().get("text")).contains("Неверный формат"));
+
+        verifyNoInteractions(stateRepository);
+    }
+
+    @Test
+    @DisplayName("Валидация ссылки в /track: корректная ссылка")
+    void trackLinkSuccessValidation() {
+        StateRepository stateRepository = mock(StateRepository.class);
+        LinkValidator linkValidator = new LinkValidator();
+        WaitingForLinkHandler handler = new WaitingForLinkHandler(stateRepository, linkValidator);
+
+        long chatId = 123L;
 
         Update validUpdate = mockUpdate("https://github.com/user/repo", chatId);
         SendMessage successResponse = handler.handle(validUpdate, null);
+
         assertTrue(((String) successResponse.getParameters().get("text")).contains("Введите теги"));
         verify(stateRepository).setState(chatId, UserState.WAITING_FOR_TAGS);
     }

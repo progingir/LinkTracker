@@ -1,7 +1,6 @@
 package backend.academy.linktracker.scrapper.client;
 
 import backend.academy.linktracker.scrapper.dto.StackOverflowResponse;
-import backend.academy.linktracker.scrapper.properties.StackoverflowProperties;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -12,8 +11,8 @@ import org.springframework.web.client.RestClient;
 public class StackOverflowClient {
     private final RestClient restClient;
 
-    public StackOverflowClient(RestClient.Builder builder, StackoverflowProperties properties) {
-        this.restClient = builder.baseUrl(properties.getUrl()).build();
+    public StackOverflowClient(RestClient stackoverflowRestClient) {
+        this.restClient = stackoverflowRestClient;
     }
 
     public Optional<StackOverflowResponse.Item> fetchQuestion(Long questionId) {
@@ -28,7 +27,7 @@ public class StackOverflowClient {
                 return Optional.of(response.items().getFirst());
             }
         } catch (Exception e) {
-            log.atError().setCause(e).log("Ошибка при вызове StackOverflow API");
+            log.atError().setCause(e).addKeyValue("question_id", questionId).log("Ошибка при вызове StackOverflow API");
         }
         return Optional.empty();
     }

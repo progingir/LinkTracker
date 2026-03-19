@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot.handler;
 
 import backend.academy.linktracker.bot.repository.StateRepository;
+import backend.academy.linktracker.bot.service.LinkValidator;
 import backend.academy.linktracker.bot.service.UserState;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class WaitingForLinkHandler implements StateHandler {
 
     private final StateRepository stateRepository;
+    private final LinkValidator linkValidator;
 
     @Override
     public UserState getHandledState() {
@@ -27,22 +29,18 @@ public class WaitingForLinkHandler implements StateHandler {
         String text = update.message().text();
 
         try {
-            URI uri = URI.create(text);
-
-            if (uri.getScheme() == null || !uri.getScheme().startsWith("http")) {
-                return new SendMessage(
-                        chatId,
-                        "❌ Неверный формат ссылки. Пожалуйста, отправьте корректный URL (начинающийся с http/https).");
-            }
+            URI uri = linkValidator.validate(text);
 
             stateRepository.setPendingLink(chatId, uri);
             stateRepository.setState(chatId, UserState.WAITING_FOR_TAGS);
 
             return new SendMessage(
-                    chatId, "Ссылка принята. Введите теги через запятую (или отправьте 'нет', чтобы пропустить):");
+                    chatId, "✅ Ссылка принята. Введите теги через запятую (или отправьте 'нет', чтобы пропустить):");
 
         } catch (IllegalArgumentException e) {
-            return new SendMessage(chatId, "❌ Неверный формат ссылки. Проверьте корректность URL.");
+            return new SendMessage(
+                    chatId,
+                    "❌ Неверный формат ссылки. Пожалуйста, отправьте корректный URL (начинающийся с http/https).");
 
         } catch (Exception e) {
             log.atError()

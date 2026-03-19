@@ -11,6 +11,7 @@ import backend.academy.linktracker.bot.handler.WaitingForFiltersHandler;
 import backend.academy.linktracker.bot.handler.WaitingForLinkHandler;
 import backend.academy.linktracker.bot.handler.WaitingForTagsHandler;
 import backend.academy.linktracker.bot.repository.StateRepository;
+import backend.academy.linktracker.bot.service.LinkValidator;
 import backend.academy.linktracker.bot.service.UserState;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
@@ -34,7 +35,8 @@ class BotStateMachineTest {
     void setUp() {
         stateRepository = new StateRepository();
         scrapperClient = mock(ScrapperClient.class);
-        linkHandler = new WaitingForLinkHandler(stateRepository);
+        LinkValidator linkValidator = new LinkValidator();
+        linkHandler = new WaitingForLinkHandler(stateRepository, linkValidator);
         tagsHandler = new WaitingForTagsHandler(stateRepository);
         filtersHandler = new WaitingForFiltersHandler(scrapperClient, stateRepository);
     }
