@@ -26,8 +26,7 @@ public class GrpcExceptionInterceptor implements ServerInterceptor {
                     super.onHalfClose();
                 } catch (IllegalArgumentException e) {
                     closeWithStatus(call, Status.INVALID_ARGUMENT, e);
-                } catch (ChatNotFoundException
-                        | backend.academy.linktracker.scrapper.exception.LinkNotFoundException e) {
+                } catch (ChatNotFoundException | LinkNotFoundException e) {
                     closeWithStatus(call, Status.NOT_FOUND, e);
                 } catch (LinkAlreadyTrackedException e) {
                     closeWithStatus(call, Status.ALREADY_EXISTS, e);
