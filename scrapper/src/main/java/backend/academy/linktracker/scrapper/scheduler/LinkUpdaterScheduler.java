@@ -77,7 +77,7 @@ public class LinkUpdaterScheduler {
 
     private void notifyBot(URI url, String description, List<Link> links) {
         List<Long> chatIds = links.stream().map(Link::chatId).toList();
-        Long linkId = links.isEmpty() ? 0L : links.getFirst().id();
+        long linkId = links.isEmpty() ? 0L : links.getFirst().id();
 
         botNotificationClient.sendUpdate(new LinkUpdate(linkId, url, description, chatIds));
     }
