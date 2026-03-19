@@ -1,12 +1,10 @@
 package backend.academy.linktracker.scrapper.scheduler;
 
 import backend.academy.linktracker.scrapper.client.BotNotificationClient;
-import backend.academy.linktracker.scrapper.client.GitHubClient;
-import backend.academy.linktracker.scrapper.client.StackOverflowClient;
 import backend.academy.linktracker.scrapper.domain.Link;
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
-import backend.academy.linktracker.scrapper.service.LinkParser;
+import backend.academy.linktracker.scrapper.service.LinkUpdateService;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -22,9 +20,7 @@ import org.springframework.stereotype.Component;
 public class LinkUpdaterScheduler {
 
     private final LinkRepository linkRepository;
-    private final GitHubClient gitHubClient;
-    private final StackOverflowClient stackOverflowClient;
-    private final LinkParser linkParser;
+    private final List<LinkUpdateService> updateServices;
     private final BotNotificationClient botNotificationClient;
 
     @Scheduled(fixedDelayString = "${app.scheduler.interval:30s}")
@@ -55,37 +51,33 @@ public class LinkUpdaterScheduler {
     }
 
     private void processLinkGroup(URI url, List<Link> links) {
-        OffsetDateTime lastCheck = links.stream()
-                .map(Link::lastUpdate)
-                .min(OffsetDateTime::compareTo)
-                .orElse(OffsetDateTime.now());
+        updateServices.stream()
+                .filter(service -> service.supports(url))
+                .findFirst()
+                .ifPresent(service -> {
+                    service.fetchUpdateDate(url).ifPresent(externalDate -> {
+                        List<Link> linksToNotify = links.stream()
+                                .filter(l -> externalDate.isAfter(l.lastUpdate()))
+                                .toList();
 
-        var githubInfo = linkParser.parseGithub(url);
-        if (githubInfo != null) {
-            gitHubClient.fetchRepository(githubInfo.owner(), githubInfo.repo()).ifPresent(response -> {
-                if (response.updatedAt().isAfter(lastCheck)) {
-                    notifyBot(url, "Обнаружена новая активность в GitHub репозитории!", links);
-                }
-            });
-        }
+                        if (!linksToNotify.isEmpty()) {
+                            log.atInfo()
+                                    .addKeyValue("url", url)
+                                    .addKeyValue("affected_chats", linksToNotify.size())
+                                    .log("Найдено обновление, отправляю уведомления");
 
-        Long questionId = linkParser.parseStackOverflow(url);
-        if (questionId != null) {
-            stackOverflowClient.fetchQuestion(questionId).ifPresent(response -> {
-                if (response.lastActivityDate().isAfter(lastCheck)) {
-                    notifyBot(url, "Обнаружена новая активность в вопросе: " + response.title(), links);
-                }
-            });
-        }
+                            notifyBot(url, service.getUpdateDescription(url, externalDate), linksToNotify);
+                        }
 
-        OffsetDateTime now = OffsetDateTime.now();
-        links.forEach(l -> linkRepository.updateLastUpdate(l.id(), now));
+                        OffsetDateTime now = OffsetDateTime.now();
+                        links.forEach(l -> linkRepository.updateLastUpdate(l.id(), now));
+                    });
+                });
     }
 
     private void notifyBot(URI url, String description, List<Link> links) {
         List<Long> chatIds = links.stream().map(Link::chatId).toList();
-
-        Long linkId = links.isEmpty() ? Long.valueOf(0L) : links.getFirst().id();
+        Long linkId = links.isEmpty() ? 0L : links.getFirst().id();
 
         botNotificationClient.sendUpdate(new LinkUpdate(linkId, url, description, chatIds));
     }

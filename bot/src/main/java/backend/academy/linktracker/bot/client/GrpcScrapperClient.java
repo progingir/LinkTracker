@@ -2,91 +2,124 @@ package backend.academy.linktracker.bot.client;
 
 import backend.academy.linktracker.bot.dto.*;
 import backend.academy.linktracker.bot.exception.*;
+import backend.academy.linktracker.bot.properties.GrpcScrapperProperties;
 import backend.academy.linktracker.grpc.*;
+import io.grpc.ClientInterceptor;
+import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.MetadataUtils;
 import java.net.URI;
-import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "app", name = "scrapper-client-type", havingValue = "grpc", matchIfMissing = true)
 public class GrpcScrapperClient implements ScrapperClient {
 
     private final ScrapperServiceGrpc.ScrapperServiceBlockingStub stub;
+    private final GrpcScrapperProperties grpcProperties;
 
-    @Value("${app.grpc.scrapper-deadline:5s}")
-    private Duration deadline;
+    private static final Metadata.Key<String> TG_CHAT_ID_KEY =
+            Metadata.Key.of("tg-chat-id", Metadata.ASCII_STRING_MARSHALLER);
 
     @Override
     public void registerChat(Long chatId) {
+        log.atInfo().addKeyValue("chat_id", chatId).log("grpc: отправка запроса на регистрацию чата");
         try {
-            stub.withDeadlineAfter(deadline.toMillis(), TimeUnit.MILLISECONDS)
-                    .registerChat(ChatRequest.newBuilder().setId(chatId).build());
+            getStubWithHeaders(chatId).registerChat(ChatRequest.newBuilder().build());
         } catch (StatusRuntimeException e) {
             throw getGrpcError(e);
         }
+        log.atInfo().addKeyValue("chat_id", chatId).log("Чат успешно зарегистрирован");
     }
 
     @Override
     public void deleteChat(Long chatId) {
+        log.atInfo().addKeyValue("chat_id", chatId).log("grpc: отправка запроса на удаление чата");
         try {
-            stub.withDeadlineAfter(deadline.toMillis(), TimeUnit.MILLISECONDS)
-                    .deleteChat(ChatRequest.newBuilder().setId(chatId).build());
+            getStubWithHeaders(chatId).deleteChat(ChatRequest.newBuilder().build());
         } catch (StatusRuntimeException e) {
             throw getGrpcError(e);
         }
+        log.atInfo().addKeyValue("chat_id", chatId).log("Чат успешно удален");
     }
 
     @Override
     public ListLinksResponse getLinks(Long chatId) {
+        log.atInfo().addKeyValue("chat_id", chatId).log("grpc: отправка запроса на получение ссылок");
+        ListLinksResponse response;
         try {
-            ListLinksResponseMsg res = stub.withDeadlineAfter(deadline.toMillis(), TimeUnit.MILLISECONDS)
-                    .getLinks(ChatRequest.newBuilder().setId(chatId).build());
+            ListLinksResponseMsg res =
+                    getStubWithHeaders(chatId).getLinks(ChatRequest.newBuilder().build());
 
             List<LinkResponse> links = res.getLinksList().stream()
                     .map(l -> new LinkResponse(l.getId(), URI.create(l.getUrl()), l.getTagsList(), l.getFiltersList()))
                     .toList();
-            return new ListLinksResponse(links, res.getSize());
+            response = new ListLinksResponse(links, res.getSize());
         } catch (StatusRuntimeException e) {
             throw getGrpcError(e);
         }
+        log.atInfo().addKeyValue("chat_id", chatId).log("Список ссылок успешно получен");
+        return response;
     }
 
     @Override
     public LinkResponse addLink(Long chatId, URI link, List<String> tags, List<String> filters) {
+        log.atInfo()
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("url", link)
+                .log("grpc: отправка запроса на добавление ссылки");
+        LinkResponse response;
         try {
-            LinkResponseMsg res = stub.withDeadlineAfter(deadline.toMillis(), TimeUnit.MILLISECONDS)
+            LinkResponseMsg res = getStubWithHeaders(chatId)
                     .addLink(AddLinkRequestMsg.newBuilder()
-                            .setChatId(chatId)
                             .setLink(link.toString())
                             .addAllTags(tags)
                             .addAllFilters(filters)
                             .build());
-            return new LinkResponse(res.getId(), URI.create(res.getUrl()), res.getTagsList(), res.getFiltersList());
+            response = new LinkResponse(res.getId(), URI.create(res.getUrl()), res.getTagsList(), res.getFiltersList());
         } catch (StatusRuntimeException e) {
             throw getGrpcError(e);
         }
+        log.atInfo().addKeyValue("chat_id", chatId).addKeyValue("url", link).log("Ссылка успешно добавлена");
+        return response;
     }
 
     @Override
     public LinkResponse removeLink(Long chatId, URI link) {
+        log.atInfo()
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("url", link)
+                .log("grpc: отправка запроса на удаление ссылки");
+        LinkResponse response;
         try {
-            LinkResponseMsg res = stub.withDeadlineAfter(deadline.toMillis(), TimeUnit.MILLISECONDS)
+            LinkResponseMsg res = getStubWithHeaders(chatId)
                     .removeLink(RemoveLinkRequestMsg.newBuilder()
-                            .setChatId(chatId)
                             .setLink(link.toString())
                             .build());
-            return new LinkResponse(res.getId(), URI.create(res.getUrl()), res.getTagsList(), res.getFiltersList());
+            response = new LinkResponse(res.getId(), URI.create(res.getUrl()), res.getTagsList(), res.getFiltersList());
         } catch (StatusRuntimeException e) {
             throw getGrpcError(e);
         }
+        log.atInfo().addKeyValue("chat_id", chatId).addKeyValue("url", link).log("Ссылка успешно удалена");
+        return response;
+    }
+
+    private ScrapperServiceGrpc.ScrapperServiceBlockingStub getStubWithHeaders(Long chatId) {
+        Metadata metadata = new Metadata();
+        metadata.put(TG_CHAT_ID_KEY, String.valueOf(chatId));
+
+        ClientInterceptor interceptor = MetadataUtils.newAttachHeadersInterceptor(metadata);
+
+        return stub.withInterceptors(interceptor)
+                .withDeadlineAfter(grpcProperties.getScrapperDeadline().toMillis(), TimeUnit.MILLISECONDS);
     }
 
     private RuntimeException getGrpcError(StatusRuntimeException e) {

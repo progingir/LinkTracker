@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.command.StartCommand;
-import backend.academy.linktracker.bot.repository.StateRepository;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -20,14 +19,12 @@ import org.junit.jupiter.api.Test;
 class StartCommandTest {
 
     private ScrapperClient scrapperClient;
-    private StateRepository stateRepository;
     private StartCommand startCommand;
 
     @BeforeEach
     void setUp() {
         scrapperClient = mock(ScrapperClient.class);
-        stateRepository = mock(StateRepository.class);
-        startCommand = new StartCommand(scrapperClient, stateRepository);
+        startCommand = new StartCommand(scrapperClient);
     }
 
     @Test

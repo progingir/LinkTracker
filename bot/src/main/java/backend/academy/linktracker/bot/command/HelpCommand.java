@@ -1,6 +1,5 @@
 package backend.academy.linktracker.bot.command;
 
-import backend.academy.linktracker.bot.repository.StateRepository;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import java.util.stream.Collectors;
@@ -11,11 +10,9 @@ import org.springframework.stereotype.Component;
 public class HelpCommand implements Command {
 
     private final CommandRegistry commandRegistry;
-    private final StateRepository stateRepository;
 
-    public HelpCommand(@Lazy CommandRegistry commandRegistry, StateRepository stateRepository) {
+    public HelpCommand(@Lazy CommandRegistry commandRegistry) {
         this.commandRegistry = commandRegistry;
-        this.stateRepository = stateRepository;
     }
 
     @Override
@@ -31,7 +28,6 @@ public class HelpCommand implements Command {
     @Override
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
-        stateRepository.clear(chatId);
 
         String helpText = commandRegistry.getCommandsMetadata().entrySet().stream()
                 .map(entry -> entry.getKey() + " - " + entry.getValue())

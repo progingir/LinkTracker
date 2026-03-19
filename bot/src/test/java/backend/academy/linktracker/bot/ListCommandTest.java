@@ -24,8 +24,7 @@ class ListCommandTest {
     @DisplayName("Отображение сообщения, если список пуст")
     void handle_ShouldReturnEmptyMessage_WhenNoLinks() {
         ScrapperClient client = mock(ScrapperClient.class);
-        StateRepository stateRepository = mock(StateRepository.class);
-        ListCommand command = new ListCommand(client, stateRepository);
+        ListCommand command = new ListCommand(client);
 
         long chatId = 1L;
         when(client.getLinks(chatId)).thenReturn(new ListLinksResponse(List.of(), 0));
@@ -37,7 +36,6 @@ class ListCommandTest {
         String text = response.getParameters().get("text").toString();
 
         assertTrue(text.contains("список отслеживания пуст"));
-        verify(stateRepository).clear(chatId);
     }
 
     @Test
@@ -45,7 +43,7 @@ class ListCommandTest {
     void handle_ShouldReturnLinksList() {
         ScrapperClient client = mock(ScrapperClient.class);
         StateRepository stateRepository = mock(StateRepository.class);
-        ListCommand command = new ListCommand(client, stateRepository);
+        ListCommand command = new ListCommand(client);
         long chatId = 1L;
 
         var links = List.of(new LinkResponse(1L, URI.create("http://test.com"), List.of("work"), List.of()));
@@ -65,8 +63,7 @@ class ListCommandTest {
     @DisplayName("Фильтрация списка по тегу (/list work)")
     void handle_ShouldFilterByTag() {
         ScrapperClient client = mock(ScrapperClient.class);
-        StateRepository stateRepository = mock(StateRepository.class);
-        ListCommand command = new ListCommand(client, stateRepository);
+        ListCommand command = new ListCommand(client);
         long chatId = 1L;
 
         var links = List.of(

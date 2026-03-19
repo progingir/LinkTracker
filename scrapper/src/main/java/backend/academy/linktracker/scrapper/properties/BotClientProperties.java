@@ -1,6 +1,7 @@
 package backend.academy.linktracker.scrapper.properties;
 
 import jakarta.validation.constraints.NotEmpty;
+import java.time.Duration;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.URL;
@@ -20,5 +21,5 @@ public class BotClientProperties {
     @NotEmpty
     private String grpcChannelName = "bot-channel";
 
-    private java.time.Duration deadline = java.time.Duration.ofSeconds(5);
+    private Duration deadline = Duration.ofSeconds(5);
 }

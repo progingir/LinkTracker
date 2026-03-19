@@ -1,23 +1,25 @@
 package backend.academy.linktracker.bot.controller;
 
+import backend.academy.linktracker.bot.mapper.BotGrpcMapper;
 import backend.academy.linktracker.bot.service.BotService;
-import backend.academy.linktracker.grpc.*;
+import backend.academy.linktracker.grpc.BotServiceGrpc;
+import backend.academy.linktracker.grpc.Empty;
+import backend.academy.linktracker.grpc.LinkUpdateMsg;
 import io.grpc.stub.StreamObserver;
-import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class BotGrpcController extends BotServiceGrpc.BotServiceImplBase {
+
     private final BotService botService;
+    private final BotGrpcMapper mapper;
 
     @Override
     public void sendUpdate(LinkUpdateMsg request, StreamObserver<Empty> responseObserver) {
-        var update = new backend.academy.linktracker.bot.dto.LinkUpdate(
-                request.getId(), URI.create(request.getUrl()),
-                request.getDescription(), request.getTgChatIdsList());
-        botService.sendNotification(update);
+        botService.sendNotification(mapper.toDto(request));
+
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
     }

@@ -28,13 +28,13 @@ public class StateRepository {
         states.compute(
                 chatId,
                 (k, v) -> v == null
-                        ? new UserContext(state, null, null)
+                        ? new UserContext(state, null, List.of())
                         : new UserContext(state, v.getPendingLink(), v.getPendingTags()));
     }
 
     public void setPendingLink(Long chatId, URI link) {
         states.compute(chatId, (k, v) -> {
-            if (v == null) return new UserContext(UserState.NONE, link, null);
+            if (v == null) return new UserContext(UserState.NONE, link, List.of());
             v.setPendingLink(link);
             return v;
         });
@@ -42,13 +42,15 @@ public class StateRepository {
 
     public void setPendingTags(Long chatId, List<String> tags) {
         states.compute(chatId, (k, v) -> {
-            if (v != null) v.setPendingTags(tags);
+            if (v != null) {
+                v.setPendingTags(tags != null ? tags : List.of());
+            }
             return v;
         });
     }
 
     public UserContext getContext(Long chatId) {
-        return states.getOrDefault(chatId, new UserContext(UserState.NONE, null, null));
+        return states.getOrDefault(chatId, new UserContext(UserState.NONE, null, List.of()));
     }
 
     public void clear(Long chatId) {

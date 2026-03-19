@@ -39,16 +39,18 @@ public class BotService implements UpdatesListener {
                 continue;
             }
 
+            Long chatId = update.message().chat().id();
+
             try {
                 SendMessage response = createResponse(update);
 
                 if (response != null) {
-                    Long userId = extractUserId(update);
-                    messageSender.sendMessage(response, userId);
+                    messageSender.sendMessage(response, chatId);
                 }
             } catch (Exception e) {
                 log.atError()
                         .setCause(e)
+                        .addKeyValue("chat_id", chatId)
                         .addKeyValue("update_id", update.updateId())
                         .log("Критический сбой при обработке обновления");
             }
@@ -72,7 +74,6 @@ public class BotService implements UpdatesListener {
     }
 
     private SendMessage createResponse(Update update) {
-        Long userId = extractUserId(update);
         String text = update.message().text();
         long chatId = update.message().chat().id();
 
@@ -87,10 +88,11 @@ public class BotService implements UpdatesListener {
             if (commandToExecute != null) {
                 log.atInfo()
                         .addKeyValue("command", commandToExecute.commandName())
+                        .addKeyValue("chat_id", chatId)
                         .log("Выполняю команду");
                 return commandToExecute.handle(update);
             } else {
-                return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список.");
+                return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help.");
             }
         }
 
@@ -99,15 +101,10 @@ public class BotService implements UpdatesListener {
             return handler.handle(update, context);
         } else {
             log.atWarn()
-                    .addKeyValue("user_id", userId)
+                    .addKeyValue("chat_id", chatId)
                     .addKeyValue("text", text)
-                    .log("Текст вне контекста");
-            return new SendMessage(
-                    chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд");
+                    .log("Получен текст вне контекста диалога");
+            return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help.");
         }
-    }
-
-    private Long extractUserId(Update update) {
-        return (update.message().from() != null) ? update.message().from().id() : 0L;
     }
 }

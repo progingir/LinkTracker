@@ -17,7 +17,7 @@ public class BotController {
     private final BotService botService;
 
     @PostMapping("/updates")
-    public void sendUpdate(@Valid @RequestBody LinkUpdate update) {
+    public void getUpdate(@Valid @RequestBody LinkUpdate update) {
         log.atInfo().addKeyValue("url", update.url()).log("Получено обновление от Scrapper");
         botService.sendNotification(update);
     }

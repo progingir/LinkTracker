@@ -24,7 +24,7 @@ public class HttpScrapperClient implements ScrapperClient {
 
     @Override
     public void registerChat(Long chatId) {
-        log.atInfo().addKeyValue("chat_id", chatId).log("Отправка запроса на регистрацию чата в Scrapper");
+        log.atInfo().addKeyValue("chat_id", chatId).log("http: отправка запроса на регистрацию чата");
 
         scrapperRestClient
                 .post()
@@ -39,6 +39,7 @@ public class HttpScrapperClient implements ScrapperClient {
 
     @Override
     public void deleteChat(Long chatId) {
+        log.atInfo().addKeyValue("chat_id", chatId).log("http: отправка запроса на удаление чата");
         scrapperRestClient
                 .delete()
                 .uri("/tg-chat/{id}", chatId)
@@ -47,11 +48,15 @@ public class HttpScrapperClient implements ScrapperClient {
                     throw new ResourceNotFoundException("Чат не найден: " + chatId);
                 })
                 .toBodilessEntity();
+
+        log.atInfo().addKeyValue("chat_id", chatId).log("Чат успешно удален");
     }
 
     @Override
     public ListLinksResponse getLinks(Long chatId) {
-        return scrapperRestClient
+        log.atInfo().addKeyValue("chat_id", chatId).log("http: отправка запроса на получение ссылок");
+
+        ListLinksResponse response = scrapperRestClient
                 .get()
                 .uri("/links")
                 .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
@@ -60,11 +65,19 @@ public class HttpScrapperClient implements ScrapperClient {
                     throw new ResourceNotFoundException("Чат не найден: " + chatId);
                 })
                 .body(ListLinksResponse.class);
+
+        log.atInfo().addKeyValue("chat_id", chatId).log("Список ссылок успешно получен");
+        return response;
     }
 
     @Override
     public LinkResponse addLink(Long chatId, URI link, List<String> tags, List<String> filters) {
-        return scrapperRestClient
+        log.atInfo()
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("url", link)
+                .log("http: отправка запроса на добавление ссылки");
+
+        LinkResponse response = scrapperRestClient
                 .post()
                 .uri("/links")
                 .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
@@ -77,11 +90,19 @@ public class HttpScrapperClient implements ScrapperClient {
                     throw new ResourceAlreadyExistsException("Ссылка уже отслеживается");
                 })
                 .body(LinkResponse.class);
+
+        log.atInfo().addKeyValue("chat_id", chatId).addKeyValue("url", link).log("Ссылка успешно добавлена");
+        return response;
     }
 
     @Override
     public LinkResponse removeLink(Long chatId, URI link) {
-        return scrapperRestClient
+        log.atInfo()
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("url", link)
+                .log("http: отправка запроса на удаление ссылки");
+
+        LinkResponse response = scrapperRestClient
                 .method(HttpMethod.DELETE)
                 .uri("/links")
                 .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
@@ -91,5 +112,8 @@ public class HttpScrapperClient implements ScrapperClient {
                     throw new ResourceNotFoundException("Ссылка или чат не найдены");
                 })
                 .body(LinkResponse.class);
+
+        log.atInfo().addKeyValue("chat_id", chatId).addKeyValue("url", link).log("Ссылка успешно удалена");
+        return response;
     }
 }

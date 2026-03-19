@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.bot.command.CommandRegistry;
 import backend.academy.linktracker.bot.command.HelpCommand;
-import backend.academy.linktracker.bot.repository.StateRepository;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -22,11 +21,10 @@ class HelpCommandTest {
     void handleReturnsAllCommandsFromRegistry() {
 
         CommandRegistry registry = mock(CommandRegistry.class);
-        StateRepository stateRepository = mock(StateRepository.class);
 
         when(registry.getCommandsMetadata()).thenReturn(Map.of("/test1", "desc1"));
 
-        HelpCommand helpCommand = new HelpCommand(registry, stateRepository);
+        HelpCommand helpCommand = new HelpCommand(registry);
 
         Update update = mock(Update.class);
         Message message = mock(Message.class);

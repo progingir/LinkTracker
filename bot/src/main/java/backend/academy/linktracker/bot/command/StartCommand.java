@@ -2,7 +2,6 @@ package backend.academy.linktracker.bot.command;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.exception.ResourceAlreadyExistsException;
-import backend.academy.linktracker.bot.repository.StateRepository;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 public class StartCommand implements Command {
 
     private final ScrapperClient scrapperClient;
-    private final StateRepository stateRepository;
 
     @Override
     public String commandName() {
@@ -30,8 +28,6 @@ public class StartCommand implements Command {
     @Override
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
-
-        stateRepository.clear(chatId);
 
         try {
             scrapperClient.registerChat(chatId);
