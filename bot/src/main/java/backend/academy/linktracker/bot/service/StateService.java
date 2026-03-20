@@ -28,7 +28,7 @@ public class StateService {
         if (current.isEmpty()) {
             nextContext = new UserContext(state, null, List.of());
         } else {
-            UserContext v = current.get();
+            UserContext v = current.orElseThrow();
             nextContext = new UserContext(state, v.getPendingLink(), v.getPendingTags());
         }
 
@@ -47,7 +47,7 @@ public class StateService {
         if (current.isEmpty()) {
             context = new UserContext(DefaultState.NONE, link, List.of());
         } else {
-            context = current.get();
+            context = current.orElseThrow();
             context.setPendingLink(link);
         }
 
