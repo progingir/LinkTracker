@@ -2,6 +2,8 @@ package backend.academy.linktracker.bot.handler;
 
 import backend.academy.linktracker.bot.repository.StateRepository;
 import backend.academy.linktracker.bot.service.LinkValidator;
+import backend.academy.linktracker.bot.service.StateService;
+import backend.academy.linktracker.bot.service.TrackState;
 import backend.academy.linktracker.bot.service.UserState;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -15,12 +17,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class WaitingForLinkHandler implements StateHandler {
 
-    private final StateRepository stateRepository;
+    private final StateService stateService;
     private final LinkValidator linkValidator;
 
     @Override
     public UserState getHandledState() {
-        return UserState.WAITING_FOR_LINK;
+        return TrackState.WAITING_FOR_LINK;
     }
 
     @Override
@@ -31,8 +33,8 @@ public class WaitingForLinkHandler implements StateHandler {
         try {
             URI uri = linkValidator.validate(text);
 
-            stateRepository.setPendingLink(chatId, uri);
-            stateRepository.setState(chatId, UserState.WAITING_FOR_TAGS);
+            stateService.setPendingLink(chatId, uri);
+            stateService.setState(chatId, TrackState.WAITING_FOR_TAGS);
 
             return new SendMessage(
                     chatId, "✅ Ссылка принята. Введите теги через запятую (или отправьте 'нет', чтобы пропустить):");
@@ -49,7 +51,7 @@ public class WaitingForLinkHandler implements StateHandler {
                     .addKeyValue("input_text", text)
                     .log("Критическая ошибка при обработке ссылки");
 
-            stateRepository.clear(chatId);
+            stateService.clear(chatId);
 
             return new SendMessage(chatId, "❌ Произошла внутренняя ошибка сервера. Попробуйте позже.");
         }

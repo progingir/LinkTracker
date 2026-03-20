@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.bot.command.TrackCommand;
-import backend.academy.linktracker.bot.repository.StateRepository;
-import backend.academy.linktracker.bot.service.UserState;
+import backend.academy.linktracker.bot.service.StateService;
+import backend.academy.linktracker.bot.service.TrackState;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -16,8 +16,8 @@ class TrackCommandTest {
 
     @Test
     void execute_ShouldSetStateAndReturnMessage() {
-        StateRepository stateRepository = mock(StateRepository.class);
-        TrackCommand command = new TrackCommand(stateRepository);
+        StateService stateService = mock(StateService.class);
+        TrackCommand command = new TrackCommand(stateService);
 
         long chatId = 123L;
         Update update = mockUpdate(chatId);
@@ -27,7 +27,7 @@ class TrackCommandTest {
         assertEquals(
                 "Пришлите ссылку на ресурс, который хотите отслеживать:",
                 response.getParameters().get("text"));
-        verify(stateRepository).setState(chatId, UserState.WAITING_FOR_LINK);
+        verify(stateService).setState(chatId, TrackState.WAITING_FOR_LINK);
     }
 
     private Update mockUpdate(long chatId) {

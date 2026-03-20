@@ -1,6 +1,6 @@
 package backend.academy.linktracker.bot.command;
 
-import backend.academy.linktracker.bot.repository.StateRepository;
+import backend.academy.linktracker.bot.service.StateService;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CancelCommand implements Command {
 
-    private final StateRepository stateRepository;
+    private final StateService stateService;
 
     @Override
     public String commandName() {
@@ -26,7 +26,7 @@ public class CancelCommand implements Command {
     public SendMessage handle(Update update) {
         long chatId = update.message().chat().id();
 
-        stateRepository.clear(chatId);
+        stateService.clear(chatId);
         return new SendMessage(chatId, "🔄 Операция отменена. Я готов к новым командам.");
     }
 }

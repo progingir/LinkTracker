@@ -10,8 +10,9 @@ import static org.mockito.Mockito.when;
 import backend.academy.linktracker.bot.command.Command;
 import backend.academy.linktracker.bot.repository.StateRepository;
 import backend.academy.linktracker.bot.service.BotService;
+import backend.academy.linktracker.bot.service.DefaultState;
+import backend.academy.linktracker.bot.service.StateService;
 import backend.academy.linktracker.bot.service.TelegramMessageSender;
-import backend.academy.linktracker.bot.service.UserState;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -27,18 +28,18 @@ class BotServiceTest {
     private BotService botService;
     private Command mockCommand;
     private TelegramMessageSender messageSender;
-    private StateRepository stateRepository;
+    private StateService stateService;
 
     @BeforeEach
     void setUp() {
         messageSender = mock(TelegramMessageSender.class);
         mockCommand = mock(Command.class);
-        stateRepository = mock(StateRepository.class);
+        stateService = mock(StateService.class);
 
-        when(stateRepository.getContext(anyLong()))
-                .thenReturn(new StateRepository.UserContext(UserState.NONE, null, null));
+        when(stateService.getContext(anyLong()))
+                .thenReturn(new StateRepository.UserContext(DefaultState.NONE, null, null));
 
-        botService = new BotService(messageSender, List.of(mockCommand), stateRepository, List.of());
+        botService = new BotService(messageSender, List.of(mockCommand), stateService, List.of());
     }
 
     @Test

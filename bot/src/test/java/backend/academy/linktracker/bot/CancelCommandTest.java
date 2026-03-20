@@ -5,7 +5,8 @@ import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.bot.command.CancelCommand;
 import backend.academy.linktracker.bot.repository.StateRepository;
-import backend.academy.linktracker.bot.service.UserState;
+import backend.academy.linktracker.bot.service.StateService;
+import backend.academy.linktracker.bot.service.TrackState;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -18,8 +19,8 @@ class CancelCommandTest {
     @Test
     @DisplayName("Отмена активной операции")
     void execute_ShouldResetState() {
-        StateRepository stateRepository = mock(StateRepository.class);
-        CancelCommand command = new CancelCommand(stateRepository);
+        StateService stateService = mock(StateService.class);
+        CancelCommand command = new CancelCommand(stateService);
         long chatId = 789L;
 
         Update update = mock(Update.class);
@@ -29,8 +30,8 @@ class CancelCommandTest {
         when(message.chat()).thenReturn(chat);
         when(chat.id()).thenReturn(chatId);
 
-        when(stateRepository.getContext(chatId))
-                .thenReturn(new StateRepository.UserContext(UserState.WAITING_FOR_LINK, null, null));
+        when(stateService.getContext(chatId))
+                .thenReturn(new StateRepository.UserContext(TrackState.WAITING_FOR_LINK, null, null));
 
         SendMessage response = command.handle(update);
 
@@ -38,6 +39,6 @@ class CancelCommandTest {
                 "🔄 Операция отменена. Я готов к новым командам.",
                 response.getParameters().get("text"));
 
-        verify(stateRepository).clear(chatId);
+        verify(stateService).clear(chatId);
     }
 }

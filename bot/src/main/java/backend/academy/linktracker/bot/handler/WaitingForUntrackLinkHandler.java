@@ -4,6 +4,8 @@ import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.exception.ResourceNotFoundException;
 import backend.academy.linktracker.bot.repository.StateRepository;
 import backend.academy.linktracker.bot.service.LinkValidator;
+import backend.academy.linktracker.bot.service.StateService;
+import backend.academy.linktracker.bot.service.UntrackState;
 import backend.academy.linktracker.bot.service.UserState;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -18,12 +20,12 @@ import org.springframework.stereotype.Component;
 public class WaitingForUntrackLinkHandler implements StateHandler {
 
     private final ScrapperClient scrapperClient;
-    private final StateRepository stateRepository;
+    private final StateService stateService;
     private final LinkValidator linkValidator;
 
     @Override
     public UserState getHandledState() {
-        return UserState.WAITING_FOR_UNTRACK_LINK;
+        return UntrackState.WAITING_FOR_UNTRACK_LINK;
     }
 
     @Override
@@ -35,18 +37,18 @@ public class WaitingForUntrackLinkHandler implements StateHandler {
             URI uri = linkValidator.validate(text);
 
             scrapperClient.removeLink(chatId, uri);
-            stateRepository.clear(chatId);
+            stateService.clear(chatId);
             return new SendMessage(chatId, "✅ Ссылка успешно удалена из вашего списка.");
 
         } catch (IllegalArgumentException e) {
             return new SendMessage(chatId, "❌ Неверный формат ссылки. Пожалуйста, пришлите корректный URL.");
 
         } catch (ResourceNotFoundException e) {
-            stateRepository.clear(chatId);
+            stateService.clear(chatId);
             return new SendMessage(chatId, "❌ Ошибка: данная ссылка не найдена в вашем списке отслеживания.");
 
         } catch (Exception e) {
-            stateRepository.clear(chatId);
+            stateService.clear(chatId);
             log.atError().setCause(e).addKeyValue("chat_id", chatId).log("Критическая ошибка при удалении ссылки");
 
             return new SendMessage(chatId, "❌ Произошла техническая ошибка. Попробуйте позже.");

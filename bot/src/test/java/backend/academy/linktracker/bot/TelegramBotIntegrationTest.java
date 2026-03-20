@@ -55,21 +55,21 @@ class TelegramBotIntegrationTest implements WithAssertions {
                         .withStatus(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody("""
-                                {
-                                  "ok": true,
-                                  "result": [
-                                    {
-                                      "update_id": 111,
-                                      "message": {
-                                        "message_id": 1,
-                                        "from": { "id": 12345, "first_name": "Valery" },
-                                        "chat": { "id": 12345, "type": "private" },
-                                        "text": "/start"
-                                      }
-                                    }
-                                  ]
-                                }
-                                """)));
+                    {
+                      "ok": true,
+                      "result": [
+                        {
+                          "update_id": 111,
+                          "message": {
+                            "message_id": 1,
+                            "from": { "id": 12345, "first_name": "Valery" },
+                            "chat": { "id": 12345, "type": "private" },
+                            "text": "/start"
+                          }
+                        }
+                      ]
+                    }
+                    """)));
 
         stubFor(post(urlMatching("/bot[^/]+/sendMessage"))
                 .willReturn(aResponse().withStatus(200).withBody("{\"ok\": true}")));

@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.bot.command.UntrackCommand;
-import backend.academy.linktracker.bot.repository.StateRepository;
-import backend.academy.linktracker.bot.service.UserState;
+import backend.academy.linktracker.bot.service.StateService;
+import backend.academy.linktracker.bot.service.UntrackState;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -16,8 +16,8 @@ class UntrackCommandTest {
 
     @Test
     void execute_ShouldSetStateAndReturnMessage() {
-        StateRepository stateRepository = mock(StateRepository.class);
-        UntrackCommand command = new UntrackCommand(stateRepository);
+        StateService stateService = mock(StateService.class);
+        UntrackCommand command = new UntrackCommand(stateService);
 
         long chatId = 456L;
         Update update = mock(Update.class);
@@ -32,6 +32,6 @@ class UntrackCommandTest {
         assertEquals(
                 "Пришлите ссылку, которую хотите перестать отслеживать:",
                 response.getParameters().get("text"));
-        verify(stateRepository).setState(chatId, UserState.WAITING_FOR_UNTRACK_LINK);
+        verify(stateService).setState(chatId, UntrackState.WAITING_FOR_UNTRACK_LINK);
     }
 }

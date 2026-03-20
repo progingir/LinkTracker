@@ -11,8 +11,10 @@ import backend.academy.linktracker.bot.handler.WaitingForFiltersHandler;
 import backend.academy.linktracker.bot.handler.WaitingForLinkHandler;
 import backend.academy.linktracker.bot.handler.WaitingForTagsHandler;
 import backend.academy.linktracker.bot.repository.StateRepository;
+import backend.academy.linktracker.bot.service.DefaultState;
 import backend.academy.linktracker.bot.service.LinkValidator;
-import backend.academy.linktracker.bot.service.UserState;
+import backend.academy.linktracker.bot.service.StateService;
+import backend.academy.linktracker.bot.service.TrackState;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 class BotStateMachineTest {
 
+    private StateService stateService;
     private StateRepository stateRepository;
     private ScrapperClient scrapperClient;
     private WaitingForLinkHandler linkHandler;
@@ -34,11 +37,12 @@ class BotStateMachineTest {
     @BeforeEach
     void setUp() {
         stateRepository = new StateRepository();
+        stateService = new StateService(stateRepository);
         scrapperClient = mock(ScrapperClient.class);
         LinkValidator linkValidator = new LinkValidator();
-        linkHandler = new WaitingForLinkHandler(stateRepository, linkValidator);
-        tagsHandler = new WaitingForTagsHandler(stateRepository);
-        filtersHandler = new WaitingForFiltersHandler(scrapperClient, stateRepository);
+        linkHandler = new WaitingForLinkHandler(stateService, linkValidator);
+        tagsHandler = new WaitingForTagsHandler(stateService);
+        filtersHandler = new WaitingForFiltersHandler(scrapperClient, stateService);
     }
 
     @Test
@@ -48,39 +52,39 @@ class BotStateMachineTest {
         String url = "https://github.com/user/repo";
 
         Update update1 = mockUpdate(url, chatId);
-        linkHandler.handle(update1, stateRepository.getContext(chatId));
+        linkHandler.handle(update1, stateService.getContext(chatId));
 
-        var context = stateRepository.getContext(chatId);
-        assertTrue(context.getState() == UserState.WAITING_FOR_TAGS);
+        var context = stateService.getContext(chatId);
+        assertTrue(context.getState() == TrackState.WAITING_FOR_TAGS);
         assertTrue(context.getPendingLink().toString().equals(url));
 
         Update update2 = mockUpdate("java, spring", chatId);
-        tagsHandler.handle(update2, stateRepository.getContext(chatId));
+        tagsHandler.handle(update2, stateService.getContext(chatId));
 
-        context = stateRepository.getContext(chatId);
-        assertTrue(context.getState() == UserState.WAITING_FOR_FILTERS);
+        context = stateService.getContext(chatId);
+        assertTrue(context.getState() == TrackState.WAITING_FOR_FILTERS);
         assertTrue(context.getPendingTags().containsAll(List.of("java", "spring")));
 
         Update update3 = mockUpdate("нет", chatId);
-        SendMessage finalResponse = filtersHandler.handle(update3, stateRepository.getContext(chatId));
+        SendMessage finalResponse = filtersHandler.handle(update3, stateService.getContext(chatId));
 
         assertTrue(finalResponse.getParameters().get("text").toString().contains("успешно добавлена"));
         verify(scrapperClient).addLink(eq(chatId), any(URI.class), any(), any());
-        assertTrue(stateRepository.getContext(chatId).getState() == UserState.NONE);
+        assertTrue(stateService.getContext(chatId).getState() == DefaultState.NONE);
     }
 
     @Test
     @DisplayName("Ошибка: ссылка уже отслеживается")
     void alreadyTrackedLink() {
         long chatId = 123L;
-        stateRepository.setState(chatId, UserState.WAITING_FOR_FILTERS);
-        stateRepository.setPendingLink(chatId, URI.create("https://github.com/user/repo"));
+        stateService.setState(chatId, TrackState.WAITING_FOR_FILTERS);
+        stateService.setPendingLink(chatId, URI.create("https://github.com/user/repo"));
 
         when(scrapperClient.addLink(any(), any(), any(), any()))
                 .thenThrow(new ResourceAlreadyExistsException("Ссылка уже отслеживается"));
 
         Update update = mockUpdate("нет", chatId);
-        SendMessage response = filtersHandler.handle(update, stateRepository.getContext(chatId));
+        SendMessage response = filtersHandler.handle(update, stateService.getContext(chatId));
 
         assertTrue(response.getParameters().get("text").toString().contains("уже отслеживается"));
     }

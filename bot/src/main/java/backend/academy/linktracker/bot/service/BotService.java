@@ -2,7 +2,6 @@ package backend.academy.linktracker.bot.service;
 
 import backend.academy.linktracker.bot.command.Command;
 import backend.academy.linktracker.bot.handler.StateHandler;
-import backend.academy.linktracker.bot.repository.StateRepository;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -18,17 +17,17 @@ public class BotService implements UpdatesListener {
 
     private final TelegramMessageSender messageSender;
     private final List<Command> commands;
-    private final StateRepository stateRepository;
+    private final StateService stateService;
     private final Map<UserState, StateHandler> stateHandlers;
 
     public BotService(
             TelegramMessageSender messageSender,
             List<Command> commands,
-            StateRepository stateRepository,
+            StateService stateService,
             List<StateHandler> handlers) {
         this.messageSender = messageSender;
         this.commands = commands;
-        this.stateRepository = stateRepository;
+        this.stateService = stateService;
         this.stateHandlers = handlers.stream().collect(Collectors.toMap(StateHandler::getHandledState, h -> h));
     }
 
@@ -77,10 +76,10 @@ public class BotService implements UpdatesListener {
         String text = update.message().text();
         long chatId = update.message().chat().id();
 
-        var context = stateRepository.getContext(chatId);
+        var context = stateService.getContext(chatId);
 
         if (text.startsWith("/")) {
-            stateRepository.clear(chatId);
+            stateService.clear(chatId);
 
             Command commandToExecute =
                     commands.stream().filter(c -> c.supports(text)).findFirst().orElse(null);

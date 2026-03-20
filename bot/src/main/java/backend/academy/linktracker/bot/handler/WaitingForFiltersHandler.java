@@ -4,6 +4,8 @@ import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.exception.ResourceAlreadyExistsException;
 import backend.academy.linktracker.bot.exception.ResourceNotFoundException;
 import backend.academy.linktracker.bot.repository.StateRepository;
+import backend.academy.linktracker.bot.service.StateService;
+import backend.academy.linktracker.bot.service.TrackState;
 import backend.academy.linktracker.bot.service.UserState;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -20,11 +22,11 @@ import org.springframework.stereotype.Component;
 public class WaitingForFiltersHandler implements StateHandler {
 
     private final ScrapperClient scrapperClient;
-    private final StateRepository stateRepository;
+    private final StateService stateService;
 
     @Override
     public UserState getHandledState() {
-        return UserState.WAITING_FOR_FILTERS;
+        return TrackState.WAITING_FOR_FILTERS;
     }
 
     @Override
@@ -43,22 +45,22 @@ public class WaitingForFiltersHandler implements StateHandler {
 
         try {
             scrapperClient.addLink(chatId, link, tags, filters);
-            stateRepository.clear(chatId);
+            stateService.clear(chatId);
             return new SendMessage(chatId, "✅ Ссылка успешно добавлена со всеми настройками!");
 
         } catch (ResourceNotFoundException e) {
-            stateRepository.clear(chatId);
+            stateService.clear(chatId);
             log.atInfo()
                     .addKeyValue("chat_id", chatId)
                     .log("Попытка добавления ссылки незарегистрированным пользователем");
             return new SendMessage(chatId, "❌ Ошибка: вы еще не зарегистрированы. Введите /start");
 
         } catch (ResourceAlreadyExistsException e) {
-            stateRepository.clear(chatId);
+            stateService.clear(chatId);
             return new SendMessage(chatId, "⚠️ Эта ссылка уже отслеживается в вашем списке.");
 
         } catch (Exception e) {
-            stateRepository.clear(chatId);
+            stateService.clear(chatId);
 
             log.atError()
                     .setCause(e)

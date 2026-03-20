@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.bot.handler.WaitingForLinkHandler;
-import backend.academy.linktracker.bot.repository.StateRepository;
 import backend.academy.linktracker.bot.service.LinkValidator;
-import backend.academy.linktracker.bot.service.UserState;
+import backend.academy.linktracker.bot.service.StateService;
+import backend.academy.linktracker.bot.service.TrackState;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -18,9 +18,9 @@ class BotFunctionalTest {
     @Test
     @DisplayName("Валидация ссылки в /track: некорректная ссылка")
     void trackLinkInvalidValidation() {
-        StateRepository stateRepository = mock(StateRepository.class);
+        StateService stateService = mock(StateService.class);
         LinkValidator linkValidator = new LinkValidator();
-        WaitingForLinkHandler handler = new WaitingForLinkHandler(stateRepository, linkValidator);
+        WaitingForLinkHandler handler = new WaitingForLinkHandler(stateService, linkValidator);
 
         long chatId = 123L;
 
@@ -29,15 +29,15 @@ class BotFunctionalTest {
 
         assertTrue(((String) failResponse.getParameters().get("text")).contains("Неверный формат"));
 
-        verifyNoInteractions(stateRepository);
+        verifyNoInteractions(stateService);
     }
 
     @Test
     @DisplayName("Валидация ссылки в /track: корректная ссылка")
     void trackLinkSuccessValidation() {
-        StateRepository stateRepository = mock(StateRepository.class);
+        StateService stateService = mock(StateService.class);
         LinkValidator linkValidator = new LinkValidator();
-        WaitingForLinkHandler handler = new WaitingForLinkHandler(stateRepository, linkValidator);
+        WaitingForLinkHandler handler = new WaitingForLinkHandler(stateService, linkValidator);
 
         long chatId = 123L;
 
@@ -45,7 +45,7 @@ class BotFunctionalTest {
         SendMessage successResponse = handler.handle(validUpdate, null);
 
         assertTrue(((String) successResponse.getParameters().get("text")).contains("Введите теги"));
-        verify(stateRepository).setState(chatId, UserState.WAITING_FOR_TAGS);
+        verify(stateService).setState(chatId, TrackState.WAITING_FOR_TAGS);
     }
 
     private Update mockUpdate(String text, long chatId) {
