@@ -114,6 +114,7 @@ public class HttpScrapperClient implements ScrapperClient {
         return response;
     }
 
+    @SuppressWarnings("PMD.UnusedFormalParameter")
     private void getHttpError(HttpRequest request, ClientHttpResponse response) throws IOException {
         HttpStatusCode status = response.getStatusCode();
         String errorMessage = response.getStatusText();

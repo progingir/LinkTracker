@@ -63,7 +63,7 @@ public class BotService implements UpdatesListener {
 
         for (Long chatId : update.tgChatIds()) {
             try {
-                messageSender.sendMessage(new SendMessage(chatId, messageText), chatId);
+                messageSender.sendMessage(new SendMessage(chatId.longValue(), messageText), chatId);
             } catch (Exception e) {
                 log.atError()
                         .setCause(e)
