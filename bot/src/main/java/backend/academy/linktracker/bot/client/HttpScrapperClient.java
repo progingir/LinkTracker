@@ -35,11 +35,11 @@ public class HttpScrapperClient implements ScrapperClient {
         log.atInfo().addKeyValue("chat_id", chatId).log("http: отправка запроса на регистрацию чата");
 
         scrapperRestClient
-            .post()
-            .uri("/tg-chat/{id}", chatId)
-            .retrieve()
-            .onStatus(HttpStatusCode::isError, this::getHttpError)
-            .toBodilessEntity();
+                .post()
+                .uri("/tg-chat/{id}", chatId)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, this::getHttpError)
+                .toBodilessEntity();
 
         log.atInfo().addKeyValue("chat_id", chatId).log("Чат успешно зарегистрирован");
     }
@@ -49,11 +49,11 @@ public class HttpScrapperClient implements ScrapperClient {
         log.atInfo().addKeyValue("chat_id", chatId).log("http: отправка запроса на удаление чата");
 
         scrapperRestClient
-            .delete()
-            .uri("/tg-chat/{id}", chatId)
-            .retrieve()
-            .onStatus(HttpStatusCode::isError, this::getHttpError)
-            .toBodilessEntity();
+                .delete()
+                .uri("/tg-chat/{id}", chatId)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, this::getHttpError)
+                .toBodilessEntity();
 
         log.atInfo().addKeyValue("chat_id", chatId).log("Чат успешно удален");
     }
@@ -63,12 +63,12 @@ public class HttpScrapperClient implements ScrapperClient {
         log.atInfo().addKeyValue("chat_id", chatId).log("http: отправка запроса на получение ссылок");
 
         ListLinksResponse response = scrapperRestClient
-            .get()
-            .uri("/links")
-            .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
-            .retrieve()
-            .onStatus(HttpStatusCode::isError, this::getHttpError)
-            .body(ListLinksResponse.class);
+                .get()
+                .uri("/links")
+                .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, this::getHttpError)
+                .body(ListLinksResponse.class);
 
         log.atInfo().addKeyValue("chat_id", chatId).log("Список ссылок успешно получен");
         return response;
@@ -77,18 +77,18 @@ public class HttpScrapperClient implements ScrapperClient {
     @Override
     public LinkResponse addLink(Long chatId, URI link, List<String> tags) {
         log.atInfo()
-            .addKeyValue("chat_id", chatId)
-            .addKeyValue("url", link)
-            .log("http: отправка запроса на добавление ссылки");
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("url", link)
+                .log("http: отправка запроса на добавление ссылки");
 
         LinkResponse response = scrapperRestClient
-            .post()
-            .uri("/links")
-            .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
-            .body(new AddLinkRequest(link, tags))
-            .retrieve()
-            .onStatus(HttpStatusCode::isError, this::getHttpError)
-            .body(LinkResponse.class);
+                .post()
+                .uri("/links")
+                .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
+                .body(new AddLinkRequest(link, tags))
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, this::getHttpError)
+                .body(LinkResponse.class);
 
         log.atInfo().addKeyValue("chat_id", chatId).addKeyValue("url", link).log("Ссылка успешно добавлена");
         return response;
@@ -97,18 +97,18 @@ public class HttpScrapperClient implements ScrapperClient {
     @Override
     public LinkResponse removeLink(Long chatId, URI link) {
         log.atInfo()
-            .addKeyValue("chat_id", chatId)
-            .addKeyValue("url", link)
-            .log("http: отправка запроса на удаление ссылки");
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("url", link)
+                .log("http: отправка запроса на удаление ссылки");
 
         LinkResponse response = scrapperRestClient
-            .method(HttpMethod.DELETE)
-            .uri("/links")
-            .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
-            .body(new RemoveLinkRequest(link))
-            .retrieve()
-            .onStatus(HttpStatusCode::isError, this::getHttpError)
-            .body(LinkResponse.class);
+                .method(HttpMethod.DELETE)
+                .uri("/links")
+                .header(TG_CHAT_ID_HEADER, String.valueOf(chatId))
+                .body(new RemoveLinkRequest(link))
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, this::getHttpError)
+                .body(LinkResponse.class);
 
         log.atInfo().addKeyValue("chat_id", chatId).addKeyValue("url", link).log("Ссылка успешно удалена");
         return response;
@@ -120,9 +120,11 @@ public class HttpScrapperClient implements ScrapperClient {
 
         try {
             JsonNode errorNode = objectMapper.readTree(response.getBody());
-            if (errorNode.has("exceptionMessage") && !errorNode.get("exceptionMessage").isNull()) {
+            if (errorNode.has("exceptionMessage")
+                    && !errorNode.get("exceptionMessage").isNull()) {
                 errorMessage = errorNode.get("exceptionMessage").asText();
-            } else if (errorNode.has("description") && !errorNode.get("description").isNull()) {
+            } else if (errorNode.has("description")
+                    && !errorNode.get("description").isNull()) {
                 errorMessage = errorNode.get("description").asText();
             }
         } catch (Exception e) {

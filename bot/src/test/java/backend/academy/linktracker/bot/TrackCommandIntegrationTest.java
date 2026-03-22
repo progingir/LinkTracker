@@ -21,20 +21,20 @@ class TrackCommandIntegrationTest extends BotIntegrationTestBase {
         URI link = URI.create("https://stackoverflow.com/questions/123");
 
         when(scrapperClient.addLink(eq(chatId), eq(link), any()))
-            .thenReturn(new LinkResponse(1L, link, List.of("java")));
+                .thenReturn(new LinkResponse(1L, link, List.of("java")));
 
         botService.process(List.of(createUpdate(chatId, "/track")));
         verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
-            .withRequestBody(containing(encoded("Пришлите ссылку на ресурс"))));
+                .withRequestBody(containing(encoded("Пришлите ссылку на ресурс"))));
 
         botService.process(List.of(createUpdate(chatId, link.toString())));
         verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
-            .withRequestBody(containing(encoded("Введите теги"))));
+                .withRequestBody(containing(encoded("Введите теги"))));
 
         botService.process(List.of(createUpdate(chatId, "java")));
 
         verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
-            .withRequestBody(containing(encoded("успешно добавлена"))));
+                .withRequestBody(containing(encoded("успешно добавлена"))));
     }
 
     @Test
@@ -44,7 +44,7 @@ class TrackCommandIntegrationTest extends BotIntegrationTestBase {
         URI link = URI.create("https://github.com/already/exists");
 
         when(scrapperClient.addLink(eq(chatId), eq(link), any()))
-            .thenThrow(new ResourceAlreadyExistsException("Link exists"));
+                .thenThrow(new ResourceAlreadyExistsException("Link exists"));
 
         botService.process(List.of(createUpdate(chatId, "/track")));
         botService.process(List.of(createUpdate(chatId, link.toString())));
@@ -52,7 +52,7 @@ class TrackCommandIntegrationTest extends BotIntegrationTestBase {
         botService.process(List.of(createUpdate(chatId, "нет")));
 
         verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
-            .withRequestBody(containing(encoded("уже отслеживается в вашем списке"))));
+                .withRequestBody(containing(encoded("уже отслеживается в вашем списке"))));
     }
 
     @Test
@@ -64,6 +64,6 @@ class TrackCommandIntegrationTest extends BotIntegrationTestBase {
         botService.process(List.of(createUpdate(chatId, "not-a-valid-url")));
 
         verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
-            .withRequestBody(containing(encoded("Неверный формат ссылки"))));
+                .withRequestBody(containing(encoded("Неверный формат ссылки"))));
     }
 }

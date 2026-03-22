@@ -18,15 +18,18 @@ class ListCommandIntegrationTest extends BotIntegrationTestBase {
     void shouldReturnLinksListWhenUserIsRegistered() {
         long chatId = 101L;
         when(scrapperClient.getLinks(chatId))
-            .thenReturn(new ListLinksResponse(
-                List.of(new LinkResponse(1L, URI.create("https://github.com/test"), List.of("dev"))), // Убрали List.of() для фильтров
-                1));
+                .thenReturn(new ListLinksResponse(
+                        List.of(new LinkResponse(
+                                1L,
+                                URI.create("https://github.com/test"),
+                                List.of("dev"))), // Убрали List.of() для фильтров
+                        1));
 
         botService.process(List.of(createUpdate(chatId, "/list")));
 
         verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
-            .withRequestBody(containing("chat_id=101"))
-            .withRequestBody(containing(encoded("https://github.com/test"))));
+                .withRequestBody(containing("chat_id=101"))
+                .withRequestBody(containing(encoded("https://github.com/test"))));
     }
 
     @Test
@@ -38,6 +41,6 @@ class ListCommandIntegrationTest extends BotIntegrationTestBase {
         botService.process(List.of(createUpdate(chatId, "/list")));
 
         verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
-            .withRequestBody(containing(encoded("Вы еще не зарегистрированы"))));
+                .withRequestBody(containing(encoded("Вы еще не зарегистрированы"))));
     }
 }

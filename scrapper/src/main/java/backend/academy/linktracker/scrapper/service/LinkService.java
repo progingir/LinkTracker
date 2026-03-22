@@ -37,8 +37,8 @@ public class LinkService {
         checkChatExists(chatId);
 
         List<LinkResponse> responseList = linkRepository.findAllByChatId(chatId).stream()
-            .map(this::mapToResponse)
-            .toList();
+                .map(this::mapToResponse)
+                .toList();
 
         return new ListLinksResponse(responseList, responseList.size());
     }
@@ -47,8 +47,7 @@ public class LinkService {
         validateChatId(chatId);
         checkChatExists(chatId);
 
-        Link savedLink =
-            linkRepository.save(chatId, uri, tags).orElseThrow(() -> new LinkAlreadyTrackedException(uri));
+        Link savedLink = linkRepository.save(chatId, uri, tags).orElseThrow(() -> new LinkAlreadyTrackedException(uri));
 
         return mapToResponse(savedLink);
     }

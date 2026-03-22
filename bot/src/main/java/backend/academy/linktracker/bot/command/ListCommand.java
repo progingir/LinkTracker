@@ -35,13 +35,13 @@ public class ListCommand implements Command {
             ListLinksResponse response = scrapperClient.getLinks(chatId);
             if (response.links().isEmpty()) {
                 return new SendMessage(
-                    chatId, "Ваш список отслеживания пуст. Используйте /track, чтобы добавить ссылку.");
+                        chatId, "Ваш список отслеживания пуст. Используйте /track, чтобы добавить ссылку.");
             }
 
             String listText = response.links().stream()
-                .map(link -> "• " + link.url()
-                    + (link.tags().isEmpty() ? "" : " (теги: " + String.join(", ", link.tags()) + ")"))
-                .collect(Collectors.joining("\n", "Вы отслеживаете следующие ресурсы:\n", ""));
+                    .map(link -> "• " + link.url()
+                            + (link.tags().isEmpty() ? "" : " (теги: " + String.join(", ", link.tags()) + ")"))
+                    .collect(Collectors.joining("\n", "Вы отслеживаете следующие ресурсы:\n", ""));
 
             return new SendMessage(chatId, listText);
         } catch (ResourceNotFoundException e) {
@@ -52,7 +52,7 @@ public class ListCommand implements Command {
             log.error("Ошибка при получении списка ссылок для чата {}", chatId, e);
 
             return new SendMessage(
-                chatId, "⚠️ Не удалось получить список из-за технической ошибки на сервере. Попробуйте позже.");
+                    chatId, "⚠️ Не удалось получить список из-за технической ошибки на сервере. Попробуйте позже.");
         }
     }
 }

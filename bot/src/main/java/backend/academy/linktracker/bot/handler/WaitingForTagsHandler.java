@@ -37,12 +37,11 @@ public class WaitingForTagsHandler implements StateHandler {
         URI link = context.getPendingLink();
 
         List<String> tags = (text.equalsIgnoreCase("нет") || text.equals("-"))
-            ? List.of()
-            : Arrays.stream(text.split(","))
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .toList();
-
+                ? List.of()
+                : Arrays.stream(text.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .toList();
 
         try {
             scrapperClient.addLink(chatId, link, tags);
@@ -53,9 +52,10 @@ public class WaitingForTagsHandler implements StateHandler {
         } catch (ResourceNotFoundException e) {
             stateService.clear(chatId);
             log.atInfo()
-                .addKeyValue("chat_id", chatId)
-                .log("Попытка добавления ссылки незарегистрированным пользователем");
-            return new SendMessage(chatId, "❌ Ошибка: вы еще не зарегистрированы. Введите /start, чтобы начать работу.");
+                    .addKeyValue("chat_id", chatId)
+                    .log("Попытка добавления ссылки незарегистрированным пользователем");
+            return new SendMessage(
+                    chatId, "❌ Ошибка: вы еще не зарегистрированы. Введите /start, чтобы начать работу.");
 
         } catch (ResourceAlreadyExistsException e) {
             stateService.clear(chatId);
@@ -64,9 +64,9 @@ public class WaitingForTagsHandler implements StateHandler {
         } catch (Exception e) {
             stateService.clear(chatId);
             log.atError()
-                .setCause(e)
-                .addKeyValue("chat_id", chatId)
-                .log("Непредвиденная ошибка при добавлении ссылки в Scrapper");
+                    .setCause(e)
+                    .addKeyValue("chat_id", chatId)
+                    .log("Непредвиденная ошибка при добавлении ссылки в Scrapper");
             return new SendMessage(chatId, "❌ Произошла техническая ошибка на сервере. Попробуйте позже.");
         }
     }

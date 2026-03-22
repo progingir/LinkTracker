@@ -39,11 +39,11 @@ public class InMemoryLinkRepository implements LinkRepository {
             }
 
             Link newLink = new Link(
-                linkIdGenerator.getAndIncrement(),
-                chatId,
-                url,
-                tags != null ? tags : List.of(),
-                OffsetDateTime.now());
+                    linkIdGenerator.getAndIncrement(),
+                    chatId,
+                    url,
+                    tags != null ? tags : List.of(),
+                    OffsetDateTime.now());
 
             links.add(newLink);
             result.set(Optional.of(newLink));

@@ -10,10 +10,10 @@ public class ScrapperGrpcMapper {
 
     public LinkResponseMsg toMsg(LinkResponse dto) {
         return LinkResponseMsg.newBuilder()
-            .setId(dto.id())
-            .setUrl(dto.url().toString())
-            .addAllTags(dto.tags())
-            .build();
+                .setId(dto.id())
+                .setUrl(dto.url().toString())
+                .addAllTags(dto.tags())
+                .build();
     }
 
     public List<LinkResponseMsg> toListMsg(List<LinkResponse> dtos) {

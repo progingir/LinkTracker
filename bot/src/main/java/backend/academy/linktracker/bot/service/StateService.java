@@ -1,12 +1,12 @@
 package backend.academy.linktracker.bot.service;
 
-import backend.academy.linktracker.bot.state.DefaultState;
 import backend.academy.linktracker.bot.repository.StateRepository;
 import backend.academy.linktracker.bot.repository.StateRepository.UserContext;
+import backend.academy.linktracker.bot.state.DefaultState;
+import backend.academy.linktracker.bot.state.UserState;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
-import backend.academy.linktracker.bot.state.UserState;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -27,7 +27,7 @@ public class GrpcScrapperClient implements ScrapperClient {
     private final GrpcScrapperProperties grpcProperties;
 
     private static final Metadata.Key<String> TG_CHAT_ID_KEY =
-        Metadata.Key.of("tg-chat-id", Metadata.ASCII_STRING_MARSHALLER);
+            Metadata.Key.of("tg-chat-id", Metadata.ASCII_STRING_MARSHALLER);
 
     @Override
     public void registerChat(Long chatId) {
@@ -57,11 +57,11 @@ public class GrpcScrapperClient implements ScrapperClient {
         ListLinksResponse response;
         try {
             ListLinksResponseMsg res =
-                getStubWithHeaders(chatId).getLinks(ChatRequest.newBuilder().build());
+                    getStubWithHeaders(chatId).getLinks(ChatRequest.newBuilder().build());
 
             List<LinkResponse> links = res.getLinksList().stream()
-                .map(l -> new LinkResponse(l.getId(), URI.create(l.getUrl()), l.getTagsList()))
-                .toList();
+                    .map(l -> new LinkResponse(l.getId(), URI.create(l.getUrl()), l.getTagsList()))
+                    .toList();
             response = new ListLinksResponse(links, res.getSize());
         } catch (StatusRuntimeException e) {
             throw getGrpcError(e);
@@ -73,16 +73,16 @@ public class GrpcScrapperClient implements ScrapperClient {
     @Override
     public LinkResponse addLink(Long chatId, URI link, List<String> tags) {
         log.atInfo()
-            .addKeyValue("chat_id", chatId)
-            .addKeyValue("url", link)
-            .log("grpc: отправка запроса на добавление ссылки");
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("url", link)
+                .log("grpc: отправка запроса на добавление ссылки");
         LinkResponse response;
         try {
             LinkResponseMsg res = getStubWithHeaders(chatId)
-                .addLink(AddLinkRequestMsg.newBuilder()
-                    .setLink(link.toString())
-                    .addAllTags(tags)
-                    .build());
+                    .addLink(AddLinkRequestMsg.newBuilder()
+                            .setLink(link.toString())
+                            .addAllTags(tags)
+                            .build());
 
             response = new LinkResponse(res.getId(), URI.create(res.getUrl()), res.getTagsList());
         } catch (StatusRuntimeException e) {
@@ -95,15 +95,15 @@ public class GrpcScrapperClient implements ScrapperClient {
     @Override
     public LinkResponse removeLink(Long chatId, URI link) {
         log.atInfo()
-            .addKeyValue("chat_id", chatId)
-            .addKeyValue("url", link)
-            .log("grpc: отправка запроса на удаление ссылки");
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("url", link)
+                .log("grpc: отправка запроса на удаление ссылки");
         LinkResponse response;
         try {
             LinkResponseMsg res = getStubWithHeaders(chatId)
-                .removeLink(RemoveLinkRequestMsg.newBuilder()
-                    .setLink(link.toString())
-                    .build());
+                    .removeLink(RemoveLinkRequestMsg.newBuilder()
+                            .setLink(link.toString())
+                            .build());
 
             response = new LinkResponse(res.getId(), URI.create(res.getUrl()), res.getTagsList());
         } catch (StatusRuntimeException e) {
@@ -120,7 +120,7 @@ public class GrpcScrapperClient implements ScrapperClient {
         ClientInterceptor interceptor = MetadataUtils.newAttachHeadersInterceptor(metadata);
 
         return stub.withInterceptors(interceptor)
-            .withDeadlineAfter(grpcProperties.getScrapperDeadline().toMillis(), TimeUnit.MILLISECONDS);
+                .withDeadlineAfter(grpcProperties.getScrapperDeadline().toMillis(), TimeUnit.MILLISECONDS);
     }
 
     private RuntimeException getGrpcError(StatusRuntimeException e) {

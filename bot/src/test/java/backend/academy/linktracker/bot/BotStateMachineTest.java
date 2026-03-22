@@ -79,7 +79,7 @@ class BotStateMachineTest {
         stateService.setPendingLink(chatId, URI.create("https://github.com/user/repo"));
 
         when(scrapperClient.addLink(any(), any(), any()))
-            .thenThrow(new ResourceAlreadyExistsException("Ссылка уже отслеживается"));
+                .thenThrow(new ResourceAlreadyExistsException("Ссылка уже отслеживается"));
 
         Update update = mockUpdate("нет", chatId);
         UserContext context = stateService.getContext(chatId);

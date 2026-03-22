@@ -19,12 +19,11 @@ class UntrackCommandIntegrationTest extends BotIntegrationTestBase {
         long chatId = 103L;
         URI link = URI.create("https://github.com/test/repo");
 
-        when(scrapperClient.removeLink(eq(chatId), eq(link)))
-            .thenReturn(new LinkResponse(1L, link, List.of()));
+        when(scrapperClient.removeLink(eq(chatId), eq(link))).thenReturn(new LinkResponse(1L, link, List.of()));
 
         botService.process(List.of(createUpdate(chatId, "/untrack")));
         verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
-            .withRequestBody(containing(encoded("Пришлите ссылку"))));
+                .withRequestBody(containing(encoded("Пришлите ссылку"))));
 
         botService.process(List.of(createUpdate(chatId, link.toString())));
         verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage")).withRequestBody(containing(encoded("успешно"))));
@@ -37,12 +36,12 @@ class UntrackCommandIntegrationTest extends BotIntegrationTestBase {
         URI link = URI.create("https://github.com/not/found");
 
         when(scrapperClient.removeLink(eq(chatId), eq(link)))
-            .thenThrow(new ResourceNotFoundException("Ссылка не найдена"));
+                .thenThrow(new ResourceNotFoundException("Ссылка не найдена"));
 
         botService.process(List.of(createUpdate(chatId, "/untrack")));
         botService.process(List.of(createUpdate(chatId, link.toString())));
 
         verify(postRequestedFor(urlMatching("/bot[^/]+/sendMessage"))
-            .withRequestBody(containing(encoded("не найдена в вашем списке"))));
+                .withRequestBody(containing(encoded("не найдена в вашем списке"))));
     }
 }
