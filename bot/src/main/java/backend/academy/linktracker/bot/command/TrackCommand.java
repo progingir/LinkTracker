@@ -1,7 +1,7 @@
 package backend.academy.linktracker.bot.command;
 
 import backend.academy.linktracker.bot.service.StateService;
-import backend.academy.linktracker.bot.service.TrackState;
+import backend.academy.linktracker.bot.state.TrackState;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;

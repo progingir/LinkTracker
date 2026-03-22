@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import backend.academy.linktracker.bot.command.Command;
 import backend.academy.linktracker.bot.repository.StateRepository;
 import backend.academy.linktracker.bot.service.BotService;
-import backend.academy.linktracker.bot.service.DefaultState;
+import backend.academy.linktracker.bot.state.DefaultState;
 import backend.academy.linktracker.bot.service.StateService;
 import backend.academy.linktracker.bot.service.TelegramMessageSender;
 import com.pengrad.telegrambot.model.Chat;

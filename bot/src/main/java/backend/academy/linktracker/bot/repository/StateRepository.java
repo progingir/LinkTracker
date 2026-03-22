@@ -1,6 +1,6 @@
 package backend.academy.linktracker.bot.repository;
 
-import backend.academy.linktracker.bot.service.UserState;
+import backend.academy.linktracker.bot.state.UserState;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;

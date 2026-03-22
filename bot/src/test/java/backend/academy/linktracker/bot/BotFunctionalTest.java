@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import backend.academy.linktracker.bot.handler.WaitingForLinkHandler;
 import backend.academy.linktracker.bot.service.LinkValidator;
 import backend.academy.linktracker.bot.service.StateService;
-import backend.academy.linktracker.bot.service.TrackState;
+import backend.academy.linktracker.bot.state.TrackState;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;

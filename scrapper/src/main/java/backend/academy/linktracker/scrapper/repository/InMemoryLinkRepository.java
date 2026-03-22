@@ -24,7 +24,7 @@ public class InMemoryLinkRepository implements LinkRepository {
     }
 
     @Override
-    public Optional<Link> save(Long chatId, URI url, List<String> tags, List<String> filters) {
+    public Optional<Link> save(Long chatId, URI url, List<String> tags) {
         AtomicReference<Optional<Link>> result = new AtomicReference<>(Optional.empty());
 
         chatLinks.compute(chatId, (key, links) -> {
@@ -39,12 +39,11 @@ public class InMemoryLinkRepository implements LinkRepository {
             }
 
             Link newLink = new Link(
-                    linkIdGenerator.getAndIncrement(),
-                    chatId,
-                    url,
-                    tags != null ? tags : List.of(),
-                    filters != null ? filters : List.of(),
-                    OffsetDateTime.now());
+                linkIdGenerator.getAndIncrement(),
+                chatId,
+                url,
+                tags != null ? tags : List.of(),
+                OffsetDateTime.now());
 
             links.add(newLink);
             result.set(Optional.of(newLink));
@@ -96,7 +95,7 @@ public class InMemoryLinkRepository implements LinkRepository {
             for (int i = 0; i < links.size(); i++) {
                 Link l = links.get(i);
                 if (l.id().equals(linkId)) {
-                    links.set(i, new Link(l.id(), l.chatId(), l.url(), l.tags(), l.filters(), updatedAt));
+                    links.set(i, new Link(l.id(), l.chatId(), l.url(), l.tags(), updatedAt));
                 }
             }
         });

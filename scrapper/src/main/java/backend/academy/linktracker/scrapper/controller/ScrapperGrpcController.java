@@ -44,16 +44,16 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
         ListLinksResponse response = linkService.getLinksResponse(getChatId());
 
         responseObserver.onNext(ListLinksResponseMsg.newBuilder()
-                .addAllLinks(mapper.toListMsg(response.links()))
-                .setSize(response.size())
-                .build());
+            .addAllLinks(mapper.toListMsg(response.links()))
+            .setSize(response.size())
+            .build());
         responseObserver.onCompleted();
     }
 
     @Override
     public void addLink(AddLinkRequestMsg request, StreamObserver<LinkResponseMsg> responseObserver) {
         LinkResponse resp = linkService.addLinkFromExternal(
-                getChatId(), request.getLink(), request.getTagsList(), request.getFiltersList());
+            getChatId(), request.getLink(), request.getTagsList());
 
         responseObserver.onNext(mapper.toMsg(resp));
         responseObserver.onCompleted();

@@ -40,34 +40,32 @@ class LinkUpdaterSchedulerTest {
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime externalUpdate = now.minusHours(5);
 
-        Link githubOld = new Link(1L, 100L, githubUrl, List.of(), List.of(), now.minusDays(1));
-
-        Link githubNew = new Link(2L, 200L, githubUrl, List.of(), List.of(), now.minusHours(1));
-
-        Link otherUser = new Link(3L, 300L, otherUrl, List.of(), List.of(), now.minusDays(1));
+        Link githubOld = new Link(1L, 100L, githubUrl, List.of(), now.minusDays(1));
+        Link githubNew = new Link(2L, 200L, githubUrl, List.of(), now.minusHours(1));
+        Link otherUser = new Link(3L, 300L, otherUrl, List.of(), now.minusDays(1));
 
         when(linkRepository.findAll()).thenReturn(List.of(githubOld, githubNew, otherUser));
 
         when(githubUpdateService.supports(githubUrl)).thenReturn(true);
         when(githubUpdateService.fetchUpdateDate(githubUrl)).thenReturn(Optional.of(externalUpdate));
         when(githubUpdateService.getUpdateDescription(githubUrl, externalUpdate))
-                .thenReturn("GitHub update!");
+            .thenReturn("GitHub update!");
 
         scheduler.update();
 
         verify(botClient, times(1))
-                .sendUpdate(argThat(update -> update.url().equals(githubUrl)
-                        && update.tgChatIds().contains(100L)
-                        && !update.tgChatIds().contains(200L)
-                        && !update.tgChatIds().contains(300L)
-                        && update.tgChatIds().size() == 1));
+            .sendUpdate(argThat(update -> update.url().equals(githubUrl)
+                && update.tgChatIds().contains(100L)
+                && !update.tgChatIds().contains(200L)
+                && !update.tgChatIds().contains(300L)
+                && update.tgChatIds().size() == 1));
     }
 
     @Test
     @DisplayName("Сценарий 8: Обработка пустого ответа")
     void handleEmptyResponse() {
         URI url = URI.create("https://github.com/user/repo");
-        Link link = new Link(1L, 100L, url, List.of(), List.of(), OffsetDateTime.now());
+        Link link = new Link(1L, 100L, url, List.of(), OffsetDateTime.now());
 
         when(linkRepository.findAll()).thenReturn(List.of(link));
         when(githubUpdateService.supports(url)).thenReturn(true);
@@ -83,7 +81,7 @@ class LinkUpdaterSchedulerTest {
     @DisplayName("Сценарий 9: Обработка критической ошибки API")
     void handleApiError() {
         URI url = URI.create("https://github.com/user/repo");
-        Link link = new Link(1L, 100L, url, List.of(), List.of(), OffsetDateTime.now());
+        Link link = new Link(1L, 100L, url, List.of(), OffsetDateTime.now());
 
         when(linkRepository.findAll()).thenReturn(List.of(link));
         when(githubUpdateService.supports(url)).thenReturn(true);

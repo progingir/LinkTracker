@@ -33,22 +33,22 @@ public class LinksController {
 
     @PostMapping
     public LinkResponse addLink(
-            @RequestHeader("Tg-Chat-Id") Long tgChatId, @Valid @RequestBody AddLinkRequest request) {
+        @RequestHeader("Tg-Chat-Id") Long tgChatId, @Valid @RequestBody AddLinkRequest request) {
         log.atInfo()
-                .addKeyValue("chat_id", tgChatId)
-                .addKeyValue("link", request.link())
-                .log("Запрос на добавление ссылки");
+            .addKeyValue("chat_id", tgChatId)
+            .addKeyValue("link", request.link())
+            .log("Запрос на добавление ссылки");
 
-        return linkService.addLinkAndMap(tgChatId, request.link(), request.tags(), request.filters());
+        return linkService.addLinkAndMap(tgChatId, request.link(), request.tags());
     }
 
     @DeleteMapping
     public LinkResponse removeLink(
-            @RequestHeader("Tg-Chat-Id") Long tgChatId, @Valid @RequestBody RemoveLinkRequest request) {
+        @RequestHeader("Tg-Chat-Id") Long tgChatId, @Valid @RequestBody RemoveLinkRequest request) {
         log.atInfo()
-                .addKeyValue("chat_id", tgChatId)
-                .addKeyValue("link", request.link())
-                .log("Запрос на удаление ссылки");
+            .addKeyValue("chat_id", tgChatId)
+            .addKeyValue("link", request.link())
+            .log("Запрос на удаление ссылки");
 
         return linkService.removeLinkAndMap(tgChatId, request.link());
     }

@@ -11,8 +11,10 @@ import backend.academy.linktracker.scrapper.repository.TgChatRepository;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LinkService {
@@ -20,9 +22,9 @@ public class LinkService {
     private final LinkRepository linkRepository;
     private final TgChatRepository tgChatRepository;
 
-    public LinkResponse addLinkFromExternal(Long chatId, String urlStr, List<String> tags, List<String> filters) {
+    public LinkResponse addLinkFromExternal(Long chatId, String urlStr, List<String> tags) {
         validateUrl(urlStr);
-        return addLinkAndMap(chatId, URI.create(urlStr), tags, filters);
+        return addLinkAndMap(chatId, URI.create(urlStr), tags);
     }
 
     public LinkResponse removeLinkFromExternal(Long chatId, String urlStr) {
@@ -35,18 +37,18 @@ public class LinkService {
         checkChatExists(chatId);
 
         List<LinkResponse> responseList = linkRepository.findAllByChatId(chatId).stream()
-                .map(this::mapToResponse)
-                .toList();
+            .map(this::mapToResponse)
+            .toList();
 
         return new ListLinksResponse(responseList, responseList.size());
     }
 
-    public LinkResponse addLinkAndMap(Long chatId, URI uri, List<String> tags, List<String> filters) {
+    public LinkResponse addLinkAndMap(Long chatId, URI uri, List<String> tags) {
         validateChatId(chatId);
         checkChatExists(chatId);
 
         Link savedLink =
-                linkRepository.save(chatId, uri, tags, filters).orElseThrow(() -> new LinkAlreadyTrackedException(uri));
+            linkRepository.save(chatId, uri, tags).orElseThrow(() -> new LinkAlreadyTrackedException(uri));
 
         return mapToResponse(savedLink);
     }
@@ -73,7 +75,8 @@ public class LinkService {
         try {
             URI.create(urlStr);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Некорректный формат URL");
+            log.atWarn().setCause(e).addKeyValue("url", urlStr).log("Некорректный формат URL");
+            throw new IllegalArgumentException("Некорректный формат URL: " + urlStr);
         }
     }
 
@@ -84,6 +87,6 @@ public class LinkService {
     }
 
     private LinkResponse mapToResponse(Link link) {
-        return new LinkResponse(link.id(), link.url(), link.tags(), link.filters());
+        return new LinkResponse(link.id(), link.url(), link.tags());
     }
 }

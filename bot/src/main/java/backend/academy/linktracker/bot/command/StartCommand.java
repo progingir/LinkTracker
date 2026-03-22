@@ -36,6 +36,9 @@ public class StartCommand implements Command {
             log.atInfo().addKeyValue("chat_id", chatId).log("Пользователь уже был зарегистрирован ранее");
         } catch (Exception e) {
             log.atError().setCause(e).addKeyValue("chat_id", chatId).log("Ошибка при регистрации чата");
+            return new SendMessage(
+                chatId,
+                "Произошла техническая ошибка при регистрации. Пожалуйста, попробуйте отправить команду /start позже");
         }
 
         return new SendMessage(

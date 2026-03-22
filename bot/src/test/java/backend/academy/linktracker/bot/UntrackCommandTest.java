@@ -5,7 +5,7 @@ import static org.mockito.Mockito.*;
 
 import backend.academy.linktracker.bot.command.UntrackCommand;
 import backend.academy.linktracker.bot.service.StateService;
-import backend.academy.linktracker.bot.service.UntrackState;
+import backend.academy.linktracker.bot.state.UntrackState;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;

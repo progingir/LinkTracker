@@ -1,4 +1,4 @@
-package backend.academy.linktracker.bot.service;
+package backend.academy.linktracker.bot.state;
 
 public enum DefaultState implements UserState {
     NONE
