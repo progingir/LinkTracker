@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.properties.TelegramProperties;
 import backend.academy.linktracker.bot.service.BotService;
 import com.pengrad.telegrambot.TelegramBot;
@@ -20,6 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.wiremock.spring.EnableWireMock;
 
 @SpringBootTest
@@ -37,6 +39,9 @@ class TelegramBotIntegrationTest implements WithAssertions {
     @Autowired
     private BotService botService;
 
+    @MockitoBean
+    private ScrapperClient scrapperClient;
+
     @AfterEach
     void clearUpdatesListener() {
         telegramBot.removeGetUpdatesListener();
@@ -50,21 +55,21 @@ class TelegramBotIntegrationTest implements WithAssertions {
                         .withStatus(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody("""
-                                {
-                                  "ok": true,
-                                  "result": [
-                                    {
-                                      "update_id": 111,
-                                      "message": {
-                                        "message_id": 1,
-                                        "from": { "id": 12345, "first_name": "Valery" },
-                                        "chat": { "id": 12345, "type": "private" },
-                                        "text": "/start"
-                                      }
-                                    }
-                                  ]
-                                }
-                                """)));
+                    {
+                      "ok": true,
+                      "result": [
+                        {
+                          "update_id": 111,
+                          "message": {
+                            "message_id": 1,
+                            "from": { "id": 12345, "first_name": "Valery" },
+                            "chat": { "id": 12345, "type": "private" },
+                            "text": "/start"
+                          }
+                        }
+                      ]
+                    }
+                    """)));
 
         stubFor(post(urlMatching("/bot[^/]+/sendMessage"))
                 .willReturn(aResponse().withStatus(200).withBody("{\"ok\": true}")));

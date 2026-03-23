@@ -27,10 +27,12 @@ public class HelpCommand implements Command {
 
     @Override
     public SendMessage handle(Update update) {
+        long chatId = update.message().chat().id();
+
         String helpText = commandRegistry.getCommandsMetadata().entrySet().stream()
                 .map(entry -> entry.getKey() + " - " + entry.getValue())
                 .collect(Collectors.joining("\n", "Доступные команды:\n", ""));
 
-        return new SendMessage(update.message().chat().id(), helpText);
+        return new SendMessage(chatId, helpText);
     }
 }
