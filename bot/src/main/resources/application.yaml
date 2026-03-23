@@ -4,6 +4,13 @@ server:
 spring:
   application:
     name: bot
+  grpc:
+    server:
+      port: 9090
+    client:
+      scrapper-channel:
+        address: static://${APP_SCRAPPER_HOST:localhost}:9091
+        negotiation-type: plaintext
 
 app:
   telegram:
@@ -11,6 +18,12 @@ app:
     token: ${TELEGRAM_TOKEN} # Use env variable. DO NOT KEEP TOKEN HERE
     update-listener-sleep: 1s
     debug: false
+  scrapper-client:
+    base-url: http://localhost:8081
+    grpc-channel-name: scrapper-channel
+  grpc:
+    scrapper-deadline: 5s
+  scrapper-client-type: grpc
 
 logging:
   structured:

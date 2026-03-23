@@ -1,5 +1,6 @@
 package backend.academy.linktracker.bot;
 
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -7,8 +8,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.bot.command.Command;
+import backend.academy.linktracker.bot.repository.StateRepository;
 import backend.academy.linktracker.bot.service.BotService;
-import com.pengrad.telegrambot.TelegramBot;
+import backend.academy.linktracker.bot.service.StateService;
+import backend.academy.linktracker.bot.service.TelegramMessageSender;
+import backend.academy.linktracker.bot.state.DefaultState;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -23,13 +27,19 @@ class BotServiceTest {
 
     private BotService botService;
     private Command mockCommand;
-    private TelegramBot telegramBot;
+    private TelegramMessageSender messageSender;
+    private StateService stateService;
 
     @BeforeEach
     void setUp() {
-        telegramBot = mock(TelegramBot.class);
+        messageSender = mock(TelegramMessageSender.class);
         mockCommand = mock(Command.class);
-        botService = new BotService(telegramBot, List.of(mockCommand));
+        stateService = mock(StateService.class);
+
+        when(stateService.getContext(anyLong()))
+                .thenReturn(new StateRepository.UserContext(DefaultState.NONE, null, null));
+
+        botService = new BotService(messageSender, List.of(mockCommand), stateService, List.of());
     }
 
     @Test
@@ -55,9 +65,14 @@ class BotServiceTest {
 
         botService.process(List.of(update));
 
-        verify(telegramBot)
-                .execute(argThat(request -> request != null
-                        && request.getParameters().get("text").toString().contains("Неизвестная команда")));
+        verify(messageSender)
+                .sendMessage(
+                        argThat(request -> request != null
+                                && request.getParameters()
+                                        .get("text")
+                                        .toString()
+                                        .contains("Неизвестная команда")),
+                        anyLong());
     }
 
     private Update mockUpdate(String text, Long chatId) {

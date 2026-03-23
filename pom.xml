@@ -28,6 +28,7 @@
         <module>ai-agent</module>
         <module>bot</module>
         <module>build-report-aggregate</module>
+        <module>grpc-api</module>
         <module>scrapper</module>
     </modules>
 
@@ -188,7 +189,13 @@
                 <artifactId>awaitility</artifactId>
                 <version>${awaitility.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>2.41.0</version>
+            </dependency>
         </dependencies>
+
     </dependencyManagement>
 
     <dependencies>

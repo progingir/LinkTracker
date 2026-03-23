@@ -6,17 +6,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.command.StartCommand;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class StartCommandTest {
 
-    private final StartCommand startCommand = new StartCommand();
+    private ScrapperClient scrapperClient;
+    private StartCommand startCommand;
+
+    @BeforeEach
+    void setUp() {
+        scrapperClient = mock(ScrapperClient.class);
+        startCommand = new StartCommand(scrapperClient);
+    }
 
     @Test
     @DisplayName("Проверка текста приветствия")
