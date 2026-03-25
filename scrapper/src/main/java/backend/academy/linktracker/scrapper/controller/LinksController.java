@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -25,30 +26,34 @@ public class LinksController {
     private final LinkService linkService;
 
     @GetMapping
-    public ListLinksResponse getLinks(@RequestHeader("Tg-Chat-Id") Long tgChatId) {
+    public ListLinksResponse getLinks(
+        @RequestHeader("Tg-Chat-Id") Long tgChatId,
+        @RequestParam(defaultValue = "10") int limit,
+        @RequestParam(defaultValue = "0") int offset
+    ) {
         log.atInfo().addKeyValue("chat_id", tgChatId).log("Запрос на получение списка ссылок");
 
-        return linkService.getLinksResponse(tgChatId);
+        return linkService.getLinksResponse(tgChatId, limit, offset);
     }
 
     @PostMapping
     public LinkResponse addLink(
-            @RequestHeader("Tg-Chat-Id") Long tgChatId, @Valid @RequestBody AddLinkRequest request) {
+        @RequestHeader("Tg-Chat-Id") Long tgChatId, @Valid @RequestBody AddLinkRequest request) {
         log.atInfo()
-                .addKeyValue("chat_id", tgChatId)
-                .addKeyValue("link", request.link())
-                .log("Запрос на добавление ссылки");
+            .addKeyValue("chat_id", tgChatId)
+            .addKeyValue("link", request.link())
+            .log("Запрос на добавление ссылки");
 
         return linkService.addLinkAndMap(tgChatId, request.link(), request.tags());
     }
 
     @DeleteMapping
     public LinkResponse removeLink(
-            @RequestHeader("Tg-Chat-Id") Long tgChatId, @Valid @RequestBody RemoveLinkRequest request) {
+        @RequestHeader("Tg-Chat-Id") Long tgChatId, @Valid @RequestBody RemoveLinkRequest request) {
         log.atInfo()
-                .addKeyValue("chat_id", tgChatId)
-                .addKeyValue("link", request.link())
-                .log("Запрос на удаление ссылки");
+            .addKeyValue("chat_id", tgChatId)
+            .addKeyValue("link", request.link())
+            .log("Запрос на удаление ссылки");
 
         return linkService.removeLinkAndMap(tgChatId, request.link());
     }

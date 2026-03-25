@@ -1,10 +1,19 @@
 package backend.academy.linktracker.scrapper;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.scrapper.client.BotNotificationClient;
 import backend.academy.linktracker.scrapper.domain.Link;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.scheduler.LinkUpdaterScheduler;
 import backend.academy.linktracker.scrapper.service.LinkUpdateService;
 import java.net.URI;
@@ -15,9 +24,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
+@TestPropertySource(properties = "app.database.access-type=jdbc")
+@Import(TestcontainersConfiguration.class)
 class LinkUpdaterSchedulerTest {
 
     @Autowired
@@ -25,6 +38,9 @@ class LinkUpdaterSchedulerTest {
 
     @MockitoBean
     private LinkRepository linkRepository;
+
+    @MockitoBean
+    private SubscriptionRepository subscriptionRepository;
 
     @MockitoBean
     private BotNotificationClient botClient;
@@ -36,40 +52,39 @@ class LinkUpdaterSchedulerTest {
     @DisplayName("Сценарий 7: Уведомление приходит подписчикам конкретной ссылки, у которых устарели данные")
     void shouldNotifyOnlySubscribedUsersWithOutdatedLinks() {
         URI githubUrl = URI.create("https://github.com/user/repo");
-        URI otherUrl = URI.create("https://stackoverflow.com/questions/1");
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime externalUpdate = now.minusHours(5);
 
-        Link githubOld = new Link(1L, 100L, githubUrl, List.of(), now.minusDays(1));
-        Link githubNew = new Link(2L, 200L, githubUrl, List.of(), now.minusHours(1));
-        Link otherUser = new Link(3L, 300L, otherUrl, List.of(), now.minusDays(1));
+        Link githubLink = new Link(1L, githubUrl, now.minusDays(1), now.minusMinutes(30));
 
-        when(linkRepository.findAll()).thenReturn(List.of(githubOld, githubNew, otherUser));
+        when(linkRepository.findOldest(anyInt())).thenReturn(List.of(githubLink));
+
+        when(subscriptionRepository.findChatIdsByLinkId(1L)).thenReturn(List.of(100L));
 
         when(githubUpdateService.supports(githubUrl)).thenReturn(true);
         when(githubUpdateService.fetchUpdateDate(githubUrl)).thenReturn(Optional.of(externalUpdate));
         when(githubUpdateService.getUpdateDescription(githubUrl, externalUpdate))
-                .thenReturn("GitHub update!");
+            .thenReturn("GitHub update!");
 
         scheduler.update();
 
         verify(botClient, times(1))
-                .sendUpdate(argThat(update -> update.url().equals(githubUrl)
-                        && update.tgChatIds().contains(100L)
-                        && !update.tgChatIds().contains(200L)
-                        && !update.tgChatIds().contains(300L)
-                        && update.tgChatIds().size() == 1));
+            .sendUpdate(argThat(update -> update.url().equals(githubUrl)
+                && update.tgChatIds().contains(100L)
+                && update.tgChatIds().size() == 1));
     }
 
     @Test
     @DisplayName("Сценарий 8: Обработка пустого ответа")
     void handleEmptyResponse() {
         URI url = URI.create("https://github.com/user/repo");
-        Link link = new Link(1L, 100L, url, List.of(), OffsetDateTime.now());
+        OffsetDateTime now = OffsetDateTime.now();
 
-        when(linkRepository.findAll()).thenReturn(List.of(link));
+        Link link = new Link(1L, url, now.minusDays(1), now);
+
+        when(linkRepository.findOldest(anyInt())).thenReturn(List.of(link));
+
         when(githubUpdateService.supports(url)).thenReturn(true);
-
         when(githubUpdateService.fetchUpdateDate(url)).thenReturn(Optional.empty());
 
         scheduler.update();
@@ -81,17 +96,18 @@ class LinkUpdaterSchedulerTest {
     @DisplayName("Сценарий 9: Обработка критической ошибки API")
     void handleApiError() {
         URI url = URI.create("https://github.com/user/repo");
-        Link link = new Link(1L, 100L, url, List.of(), OffsetDateTime.now());
+        OffsetDateTime now = OffsetDateTime.now();
 
-        when(linkRepository.findAll()).thenReturn(List.of(link));
+        Link link = new Link(1L, url, now, now);
+
+        when(linkRepository.findOldest(anyInt())).thenReturn(List.of(link));
+
         when(githubUpdateService.supports(url)).thenReturn(true);
-
         when(githubUpdateService.fetchUpdateDate(url)).thenThrow(new RuntimeException("API Down"));
 
         scheduler.update();
 
         verifyNoInteractions(botClient);
-
-        verify(linkRepository, never()).updateLastUpdate(anyLong(), any());
+        verify(linkRepository, never()).updateLastUpdateTime(anyLong(), any());
     }
 }

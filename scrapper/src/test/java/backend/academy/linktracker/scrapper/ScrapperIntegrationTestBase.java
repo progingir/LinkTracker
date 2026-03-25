@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
@@ -18,7 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-class ScrapperIntegrationTest {
+@Import(TestcontainersConfiguration.class)
+class ScrapperIntegrationTestBase {
 
     @Autowired
     private MockMvc mockMvc;
@@ -110,5 +112,49 @@ class ScrapperIntegrationTest {
     @DisplayName("3.6: Удаление несуществующего чата (404)")
     void deleteNonExistentChat() throws Exception {
         mockMvc.perform(delete("/tg-chat/{id}", 888L)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Добавление дублирующей ссылки вызывает ошибку")
+    void addDuplicateLinkThrowsError() throws Exception {
+        Long chatId = 100L;
+        String link = "https://github.com/duplicate/repo";
+
+        mockMvc.perform(post("/tg-chat/{id}", chatId)).andExpect(status().isOk());
+
+        mockMvc.perform(post("/links")
+                .header("Tg-Chat-Id", chatId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("link", link))))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(post("/links")
+                .header("Tg-Chat-Id", chatId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("link", link))))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("CRUD операции для тегов работают корректно")
+    void tagsCrudCycle() throws Exception {
+        String tagName = "spring-boot";
+        String tagResponse = mockMvc.perform(post("/tags")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("name", tagName))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value(tagName))
+            .andReturn().getResponse().getContentAsString();
+
+        Long tagId = objectMapper.readTree(tagResponse).get("id").asLong();
+
+        String newTagName = "spring-boot-3";
+        mockMvc.perform(put("/tags/{id}", tagId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("name", newTagName))))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/tags/{id}", tagId))
+            .andExpect(status().isOk());
     }
 }

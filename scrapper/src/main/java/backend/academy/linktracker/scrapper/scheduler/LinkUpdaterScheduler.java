@@ -4,13 +4,14 @@ import backend.academy.linktracker.scrapper.client.BotNotificationClient;
 import backend.academy.linktracker.scrapper.domain.Link;
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.service.LinkUpdateService;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,65 +21,69 @@ import org.springframework.stereotype.Component;
 public class LinkUpdaterScheduler {
 
     private final LinkRepository linkRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final List<LinkUpdateService> updateServices;
     private final BotNotificationClient botNotificationClient;
 
-    @Scheduled(fixedDelayString = "${app.scheduler.interval:30s}")
+    @Value("${app.scheduler.batch-size}")
+    private int batchSize;
+
+    @Scheduled(fixedDelayString = "${app.scheduler.interval}")
     public void update() {
-        log.atInfo().log("Начало фоновой проверки обновлений...");
+        log.atInfo()
+            .addKeyValue("batch_size", batchSize)
+            .log("Начало фоновой проверки обновлений");
 
-        List<Link> allLinks = linkRepository.findAll();
+        List<Link> linksToCheck = linkRepository.findOldest(batchSize);
 
-        if (allLinks.isEmpty()) {
-            log.atInfo().log("Фоновая проверка завершена: список ссылок пуст.");
+        if (linksToCheck.isEmpty()) {
             return;
         }
 
-        var linkGroups = allLinks.stream().collect(Collectors.groupingBy(Link::url));
-
-        for (var entry : linkGroups.entrySet()) {
+        for (Link link : linksToCheck) {
             try {
-                processLinkGroup(entry.getKey(), entry.getValue());
+                processSingleLink(link);
             } catch (Exception e) {
-                log.atError().setCause(e).addKeyValue("url", entry.getKey()).log("Ошибка при обработке группы ссылок");
+                log.atError()
+                    .setCause(e)
+                    .addKeyValue("link_id", link.id())
+                    .addKeyValue("link", link.url())
+                    .log("Ошибка при обработке ссылки");
+            } finally {
+                linkRepository.updateLastCheckTime(link.id(), OffsetDateTime.now());
             }
         }
-
-        log.atInfo()
-                .addKeyValue("total_urls", linkGroups.size())
-                .addKeyValue("total_subscriptions", allLinks.size())
-                .log("Фоновая проверка обновлений успешно завершена.");
     }
 
-    private void processLinkGroup(URI url, List<Link> links) {
+    private void processSingleLink(Link link) {
         updateServices.stream()
-                .filter(service -> service.supports(url))
-                .findFirst()
-                .ifPresent(service -> {
-                    service.fetchUpdateDate(url).ifPresent(externalDate -> {
-                        List<Link> linksToNotify = links.stream()
-                                .filter(l -> externalDate.isAfter(l.lastUpdate()))
-                                .toList();
+            .filter(service -> service.supports(link.url()))
+            .findFirst()
+            .ifPresent(service -> {
+                service.fetchUpdateDate(link.url()).ifPresent(externalDate -> {
 
-                        if (!linksToNotify.isEmpty()) {
+                    if (externalDate.isAfter(link.lastUpdate())) {
+
+                        List<Long> chatIds = subscriptionRepository.findChatIdsByLinkId(link.id());
+
+                        if (!chatIds.isEmpty()) {
                             log.atInfo()
-                                    .addKeyValue("url", url)
-                                    .addKeyValue("affected_chats", linksToNotify.size())
-                                    .log("Найдено обновление, отправляю уведомления");
+                                .addKeyValue("link_id", link.id())
+                                .addKeyValue("link", link.url())
+                                .addKeyValue("chats_count", chatIds.size())
+                                .log("Найдено обновление для ссылки, уведомляю чаты");
 
-                            notifyBot(url, service.getUpdateDescription(url, externalDate), linksToNotify);
+                            String description = service.getUpdateDescription(link.url(), externalDate);
+                            notifyBot(link.id(), link.url(), description, chatIds);
+
+                            linkRepository.updateLastUpdateTime(link.id(), externalDate);
                         }
-
-                        OffsetDateTime now = OffsetDateTime.now();
-                        links.forEach(l -> linkRepository.updateLastUpdate(l.id(), now));
-                    });
+                    }
                 });
+            });
     }
 
-    private void notifyBot(URI url, String description, List<Link> links) {
-        List<Long> chatIds = links.stream().map(Link::chatId).toList();
-        long linkId = links.isEmpty() ? 0L : links.getFirst().id();
-
+    private void notifyBot(Long linkId, URI url, String description, List<Long> chatIds) {
         botNotificationClient.sendUpdate(new LinkUpdate(linkId, url, description, chatIds));
     }
 }
