@@ -18,5 +18,6 @@ public interface LinkRepository {
     List<Link> findOldest(int limit);
 
     void updateLastCheckTime(Long linkId, OffsetDateTime lastCheck);
+
     void updateLastUpdateTime(Long linkId, OffsetDateTime lastUpdate);
 }

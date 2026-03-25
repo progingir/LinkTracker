@@ -20,7 +20,6 @@ public class JpaLinkRepository implements LinkRepository {
 
     private final SpringDataJpaLinkRepository jpaRepository;
 
-
     @Override
     @Transactional
     public Link save(URI url) {
@@ -37,15 +36,13 @@ public class JpaLinkRepository implements LinkRepository {
     @Override
     @Transactional(readOnly = true)
     public Optional<Link> findByUrl(URI url) {
-        return jpaRepository.findByUrl(url.toString())
-            .map(this::mapToDomain);
+        return jpaRepository.findByUrl(url.toString()).map(this::mapToDomain);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Link> findById(Long id) {
-        return jpaRepository.findById(id)
-            .map(this::mapToDomain);
+        return jpaRepository.findById(id).map(this::mapToDomain);
     }
 
     @Override
@@ -57,10 +54,9 @@ public class JpaLinkRepository implements LinkRepository {
     @Override
     @Transactional(readOnly = true)
     public List<Link> findOldest(int limit) {
-        return jpaRepository.findAllByOrderByLastCheckAtAsc(PageRequest.of(0, limit))
-            .stream()
-            .map(this::mapToDomain)
-            .toList();
+        return jpaRepository.findAllByOrderByLastCheckAtAsc(PageRequest.of(0, limit)).stream()
+                .map(this::mapToDomain)
+                .toList();
     }
 
     @Override
@@ -76,11 +72,6 @@ public class JpaLinkRepository implements LinkRepository {
     }
 
     private Link mapToDomain(LinkEntity entity) {
-        return new Link(
-            entity.getId(),
-            URI.create(entity.getUrl()),
-            entity.getLastUpdate(),
-            entity.getLastCheckAt()
-        );
+        return new Link(entity.getId(), URI.create(entity.getUrl()), entity.getLastUpdate(), entity.getLastCheckAt());
     }
 }

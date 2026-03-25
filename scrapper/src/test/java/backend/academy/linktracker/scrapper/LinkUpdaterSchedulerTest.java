@@ -64,14 +64,14 @@ class LinkUpdaterSchedulerTest {
         when(githubUpdateService.supports(githubUrl)).thenReturn(true);
         when(githubUpdateService.fetchUpdateDate(githubUrl)).thenReturn(Optional.of(externalUpdate));
         when(githubUpdateService.getUpdateDescription(githubUrl, externalUpdate))
-            .thenReturn("GitHub update!");
+                .thenReturn("GitHub update!");
 
         scheduler.update();
 
         verify(botClient, times(1))
-            .sendUpdate(argThat(update -> update.url().equals(githubUrl)
-                && update.tgChatIds().contains(100L)
-                && update.tgChatIds().size() == 1));
+                .sendUpdate(argThat(update -> update.url().equals(githubUrl)
+                        && update.tgChatIds().contains(100L)
+                        && update.tgChatIds().size() == 1));
     }
 
     @Test

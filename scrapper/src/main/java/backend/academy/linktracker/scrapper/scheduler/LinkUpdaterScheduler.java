@@ -30,9 +30,7 @@ public class LinkUpdaterScheduler {
 
     @Scheduled(fixedDelayString = "${app.scheduler.interval}")
     public void update() {
-        log.atInfo()
-            .addKeyValue("batch_size", batchSize)
-            .log("Начало фоновой проверки обновлений");
+        log.atInfo().addKeyValue("batch_size", batchSize).log("Начало фоновой проверки обновлений");
 
         List<Link> linksToCheck = linkRepository.findOldest(batchSize);
 
@@ -45,10 +43,10 @@ public class LinkUpdaterScheduler {
                 processSingleLink(link);
             } catch (Exception e) {
                 log.atError()
-                    .setCause(e)
-                    .addKeyValue("link_id", link.id())
-                    .addKeyValue("link", link.url())
-                    .log("Ошибка при обработке ссылки");
+                        .setCause(e)
+                        .addKeyValue("link_id", link.id())
+                        .addKeyValue("link", link.url())
+                        .log("Ошибка при обработке ссылки");
             } finally {
                 linkRepository.updateLastCheckTime(link.id(), OffsetDateTime.now());
             }
@@ -57,30 +55,29 @@ public class LinkUpdaterScheduler {
 
     private void processSingleLink(Link link) {
         updateServices.stream()
-            .filter(service -> service.supports(link.url()))
-            .findFirst()
-            .ifPresent(service -> {
-                service.fetchUpdateDate(link.url()).ifPresent(externalDate -> {
+                .filter(service -> service.supports(link.url()))
+                .findFirst()
+                .ifPresent(service -> {
+                    service.fetchUpdateDate(link.url()).ifPresent(externalDate -> {
+                        if (externalDate.isAfter(link.lastUpdate())) {
 
-                    if (externalDate.isAfter(link.lastUpdate())) {
+                            List<Long> chatIds = subscriptionRepository.findChatIdsByLinkId(link.id());
 
-                        List<Long> chatIds = subscriptionRepository.findChatIdsByLinkId(link.id());
+                            if (!chatIds.isEmpty()) {
+                                log.atInfo()
+                                        .addKeyValue("link_id", link.id())
+                                        .addKeyValue("link", link.url())
+                                        .addKeyValue("chats_count", chatIds.size())
+                                        .log("Найдено обновление для ссылки, уведомляю чаты");
 
-                        if (!chatIds.isEmpty()) {
-                            log.atInfo()
-                                .addKeyValue("link_id", link.id())
-                                .addKeyValue("link", link.url())
-                                .addKeyValue("chats_count", chatIds.size())
-                                .log("Найдено обновление для ссылки, уведомляю чаты");
+                                String description = service.getUpdateDescription(link.url(), externalDate);
+                                notifyBot(link.id(), link.url(), description, chatIds);
 
-                            String description = service.getUpdateDescription(link.url(), externalDate);
-                            notifyBot(link.id(), link.url(), description, chatIds);
-
-                            linkRepository.updateLastUpdateTime(link.id(), externalDate);
+                                linkRepository.updateLastUpdateTime(link.id(), externalDate);
+                            }
                         }
-                    }
+                    });
                 });
-            });
     }
 
     private void notifyBot(Long linkId, URI url, String description, List<Long> chatIds) {

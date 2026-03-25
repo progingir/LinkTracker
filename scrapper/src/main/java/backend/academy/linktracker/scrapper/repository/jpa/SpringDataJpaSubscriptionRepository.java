@@ -2,12 +2,12 @@ package backend.academy.linktracker.scrapper.repository.jpa;
 
 import backend.academy.linktracker.scrapper.entity.SubscriptionEntity;
 import backend.academy.linktracker.scrapper.entity.SubscriptionId;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import java.util.List;
 
 @Repository
 public interface SpringDataJpaSubscriptionRepository extends JpaRepository<SubscriptionEntity, SubscriptionId> {

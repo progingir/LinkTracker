@@ -43,8 +43,8 @@ public class LinkService {
         checkChatExists(chatId);
 
         List<LinkResponse> responseList = subscriptionRepository.findAllByChatId(chatId, limit, offset).stream()
-            .map(this::mapToResponse)
-            .toList();
+                .map(this::mapToResponse)
+                .toList();
 
         return new ListLinksResponse(responseList, responseList.size());
     }
@@ -56,15 +56,15 @@ public class LinkService {
 
         Link link;
         try {
-            link = linkRepository.findByUrl(uri)
-                .orElseGet(() -> linkRepository.save(uri));
+            link = linkRepository.findByUrl(uri).orElseGet(() -> linkRepository.save(uri));
         } catch (DataIntegrityViolationException e) {
             log.atInfo()
-                .addKeyValue("url", uri)
-                .log("Обнаружено состояние гонки для URL. Извлекаем существующую ссылку");
+                    .addKeyValue("url", uri)
+                    .log("Обнаружено состояние гонки для URL. Извлекаем существующую ссылку");
 
-            link = linkRepository.findByUrl(uri)
-                .orElseThrow(() -> new IllegalStateException("Ссылка должна существовать, но не найдена", e));
+            link = linkRepository
+                    .findByUrl(uri)
+                    .orElseThrow(() -> new IllegalStateException("Ссылка должна существовать, но не найдена", e));
         }
 
         if (subscriptionRepository.exists(chatId, link.id())) {
@@ -86,8 +86,7 @@ public class LinkService {
         validateChatId(chatId);
         checkChatExists(chatId);
 
-        Link link = linkRepository.findByUrl(uri)
-            .orElseThrow(() -> new LinkNotFoundException(uri));
+        Link link = linkRepository.findByUrl(uri).orElseThrow(() -> new LinkNotFoundException(uri));
 
         if (!subscriptionRepository.exists(chatId, link.id())) {
             throw new LinkNotFoundException(uri);
@@ -98,9 +97,7 @@ public class LinkService {
         List<Long> remainingSubscribers = subscriptionRepository.findChatIdsByLinkId(link.id());
 
         if (remainingSubscribers.isEmpty()) {
-            log.atInfo()
-                .addKeyValue("url", uri)
-                .log("Ссылка больше не отслеживается ни одним чатом. Удаляем из БД");
+            log.atInfo().addKeyValue("url", uri).log("Ссылка больше не отслеживается ни одним чатом. Удаляем из БД");
 
             linkRepository.remove(link.id());
         }
@@ -132,10 +129,7 @@ public class LinkService {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            log.atWarn()
-                .setCause(e)
-                .addKeyValue("url", urlStr)
-                .log("Некорректный синтаксис URL");
+            log.atWarn().setCause(e).addKeyValue("url", urlStr).log("Некорректный синтаксис URL");
             throw new IllegalArgumentException("Некорректный синтаксис URL: " + urlStr);
         }
     }

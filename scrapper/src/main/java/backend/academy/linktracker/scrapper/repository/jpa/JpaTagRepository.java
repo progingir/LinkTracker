@@ -3,10 +3,10 @@ package backend.academy.linktracker.scrapper.repository.jpa;
 import backend.academy.linktracker.scrapper.domain.Tag;
 import backend.academy.linktracker.scrapper.entity.TagEntity;
 import backend.academy.linktracker.scrapper.repository.TagRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 public class JpaTagRepository implements TagRepository {
@@ -17,8 +17,9 @@ public class JpaTagRepository implements TagRepository {
     @Transactional
     public Tag save(String name) {
         jpaRepository.upsert(name);
-        TagEntity entity = jpaRepository.findByName(name)
-            .orElseThrow(() -> new IllegalStateException("Тег должен существовать после upsert"));
+        TagEntity entity = jpaRepository
+                .findByName(name)
+                .orElseThrow(() -> new IllegalStateException("Тег должен существовать после upsert"));
 
         return mapToDomain(entity);
     }
@@ -48,8 +49,8 @@ public class JpaTagRepository implements TagRepository {
     @Transactional(readOnly = true)
     public List<Tag> findAllByChatId(Long chatId) {
         return jpaRepository.findAllByChatId(chatId).stream()
-            .map(this::mapToDomain)
-            .toList();
+                .map(this::mapToDomain)
+                .toList();
     }
 
     private Tag mapToDomain(TagEntity entity) {

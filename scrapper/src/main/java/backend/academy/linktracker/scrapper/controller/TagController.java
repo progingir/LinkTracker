@@ -3,9 +3,9 @@ package backend.academy.linktracker.scrapper.controller;
 import backend.academy.linktracker.scrapper.domain.Tag;
 import backend.academy.linktracker.scrapper.dto.TagRequest;
 import backend.academy.linktracker.scrapper.service.TagService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/tags")

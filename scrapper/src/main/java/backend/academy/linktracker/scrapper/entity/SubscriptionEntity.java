@@ -1,11 +1,11 @@
 package backend.academy.linktracker.scrapper.entity;
 
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "subscription")
@@ -29,12 +29,11 @@ public class SubscriptionEntity {
 
     @ManyToMany(cascade = {CascadeType.MERGE})
     @JoinTable(
-        name = "subscription_tag",
-        joinColumns = {
-            @JoinColumn(name = "chat_id", referencedColumnName = "chat_id"),
-            @JoinColumn(name = "link_id", referencedColumnName = "link_id")
-        },
-        inverseJoinColumns = @JoinColumn(name = "tag_id", referencedColumnName = "id")
-    )
+            name = "subscription_tag",
+            joinColumns = {
+                @JoinColumn(name = "chat_id", referencedColumnName = "chat_id"),
+                @JoinColumn(name = "link_id", referencedColumnName = "link_id")
+            },
+            inverseJoinColumns = @JoinColumn(name = "tag_id", referencedColumnName = "id"))
     private List<TagEntity> tags = new ArrayList<>();
 }

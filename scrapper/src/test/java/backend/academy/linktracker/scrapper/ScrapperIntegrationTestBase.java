@@ -123,16 +123,16 @@ class ScrapperIntegrationTestBase {
         mockMvc.perform(post("/tg-chat/{id}", chatId)).andExpect(status().isOk());
 
         mockMvc.perform(post("/links")
-                .header("Tg-Chat-Id", chatId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("link", link))))
-            .andExpect(status().isOk());
+                        .header("Tg-Chat-Id", chatId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("link", link))))
+                .andExpect(status().isOk());
 
         mockMvc.perform(post("/links")
-                .header("Tg-Chat-Id", chatId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("link", link))))
-            .andExpect(status().isConflict());
+                        .header("Tg-Chat-Id", chatId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("link", link))))
+                .andExpect(status().isConflict());
     }
 
     @Test
@@ -140,21 +140,22 @@ class ScrapperIntegrationTestBase {
     void tagsCrudCycle() throws Exception {
         String tagName = "spring-boot";
         String tagResponse = mockMvc.perform(post("/tags")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("name", tagName))))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.name").value(tagName))
-            .andReturn().getResponse().getContentAsString();
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("name", tagName))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value(tagName))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
         Long tagId = objectMapper.readTree(tagResponse).get("id").asLong();
 
         String newTagName = "spring-boot-3";
         mockMvc.perform(put("/tags/{id}", tagId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("name", newTagName))))
-            .andExpect(status().isOk());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("name", newTagName))))
+                .andExpect(status().isOk());
 
-        mockMvc.perform(delete("/tags/{id}", tagId))
-            .andExpect(status().isOk());
+        mockMvc.perform(delete("/tags/{id}", tagId)).andExpect(status().isOk());
     }
 }

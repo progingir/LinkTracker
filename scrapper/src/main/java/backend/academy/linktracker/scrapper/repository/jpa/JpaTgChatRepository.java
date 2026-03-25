@@ -2,9 +2,9 @@ package backend.academy.linktracker.scrapper.repository.jpa;
 
 import backend.academy.linktracker.scrapper.entity.ChatEntity;
 import backend.academy.linktracker.scrapper.repository.TgChatRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
 
 @RequiredArgsConstructor
 public class JpaTgChatRepository implements TgChatRepository {
@@ -37,10 +37,10 @@ public class JpaTgChatRepository implements TgChatRepository {
     @Override
     @Transactional(readOnly = true)
     public List<Long> findAll(int limit, int offset) {
-        return entityManager.createQuery(
-                "SELECT c.id FROM ChatEntity c ORDER BY c.id ASC", Long.class)
-            .setFirstResult(offset)
-            .setMaxResults(limit)
-            .getResultList();
+        return entityManager
+                .createQuery("SELECT c.id FROM ChatEntity c ORDER BY c.id ASC", Long.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
     }
 }

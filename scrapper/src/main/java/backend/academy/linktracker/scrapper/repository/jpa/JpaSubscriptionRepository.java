@@ -5,10 +5,10 @@ import backend.academy.linktracker.scrapper.entity.SubscriptionEntity;
 import backend.academy.linktracker.scrapper.entity.SubscriptionId;
 import backend.academy.linktracker.scrapper.entity.TagEntity;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 public class JpaSubscriptionRepository implements SubscriptionRepository {
@@ -44,31 +44,30 @@ public class JpaSubscriptionRepository implements SubscriptionRepository {
     @Override
     @Transactional(readOnly = true)
     public List<Subscription> findAllByChatId(Long chatId, int limit, int offset) {
-        List<SubscriptionEntity> subscriptions = entityManager.createQuery(
-                "SELECT s FROM SubscriptionEntity s JOIN FETCH s.link WHERE s.id.chatId = :chatId ORDER BY s.link.id ASC",
-                SubscriptionEntity.class)
-            .setParameter("chatId", chatId)
-            .setFirstResult(offset)
-            .setMaxResults(limit)
-            .getResultList();
+        List<SubscriptionEntity> subscriptions = entityManager
+                .createQuery(
+                        "SELECT s FROM SubscriptionEntity s JOIN FETCH s.link WHERE s.id.chatId = :chatId ORDER BY s.link.id ASC",
+                        SubscriptionEntity.class)
+                .setParameter("chatId", chatId)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
 
         if (subscriptions.isEmpty()) {
             return List.of();
         }
 
-        List<SubscriptionId> subIds = subscriptions.stream()
-            .map(SubscriptionEntity::getId)
-            .toList();
+        List<SubscriptionId> subIds =
+                subscriptions.stream().map(SubscriptionEntity::getId).toList();
 
-        entityManager.createQuery(
-                "SELECT DISTINCT s FROM SubscriptionEntity s LEFT JOIN FETCH s.tags WHERE s.id IN :ids",
-                SubscriptionEntity.class)
-            .setParameter("ids", subIds)
-            .getResultList();
+        entityManager
+                .createQuery(
+                        "SELECT DISTINCT s FROM SubscriptionEntity s LEFT JOIN FETCH s.tags WHERE s.id IN :ids",
+                        SubscriptionEntity.class)
+                .setParameter("ids", subIds)
+                .getResultList();
 
-        return subscriptions.stream()
-            .map(this::mapToDomain)
-            .toList();
+        return subscriptions.stream().map(this::mapToDomain).toList();
     }
 
     @Override
@@ -98,7 +97,7 @@ public class JpaSubscriptionRepository implements SubscriptionRepository {
                 tagRepo.upsert(tagName);
 
                 TagEntity tag = tagRepo.findByName(tagName)
-                    .orElseThrow(() -> new IllegalStateException("Тег должен существовать"));
+                        .orElseThrow(() -> new IllegalStateException("Тег должен существовать"));
 
                 sub.getTags().add(tag);
                 subscriptionRepo.save(sub);
@@ -117,10 +116,9 @@ public class JpaSubscriptionRepository implements SubscriptionRepository {
 
     private Subscription mapToDomain(SubscriptionEntity entity) {
         return new Subscription(
-            entity.getId().getChatId(),
-            entity.getLink().getId(),
-            URI.create(entity.getLink().getUrl()),
-            entity.getTags().stream().map(TagEntity::getName).toList()
-        );
+                entity.getId().getChatId(),
+                entity.getLink().getId(),
+                URI.create(entity.getLink().getUrl()),
+                entity.getTags().stream().map(TagEntity::getName).toList());
     }
 }

@@ -1,5 +1,8 @@
 package backend.academy.linktracker.scrapper;
 
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -13,10 +16,6 @@ import org.springframework.context.annotation.Bean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
 
@@ -24,9 +23,9 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     public PostgreSQLContainer<?> postgresContainer() {
         PostgreSQLContainer<?> container = new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"))
-            .withDatabaseName("scrapper-test-db")
-            .withUsername("postgres")
-            .withPassword("12345");
+                .withDatabaseName("scrapper-test-db")
+                .withUsername("postgres")
+                .withPassword("12345");
 
         container.start();
 
@@ -38,14 +37,15 @@ public class TestcontainersConfiguration {
     private void runMigrations(PostgreSQLContainer<?> c) {
         try {
             Connection connection = DriverManager.getConnection(c.getJdbcUrl(), c.getUsername(), c.getPassword());
-            Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
+            Database database =
+                    DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
 
             File migrationsDir = new File(".").getAbsolutePath().contains("scrapper")
-                ? new File("../migrations")
-                : new File("migrations");
+                    ? new File("../migrations")
+                    : new File("migrations");
 
-            Liquibase liquibase = new Liquibase("master.xml",
-                new DirectoryResourceAccessor(migrationsDir.getAbsoluteFile()), database);
+            Liquibase liquibase = new Liquibase(
+                    "master.xml", new DirectoryResourceAccessor(migrationsDir.getAbsoluteFile()), database);
 
             liquibase.update(new Contexts(), new LabelExpression());
 
