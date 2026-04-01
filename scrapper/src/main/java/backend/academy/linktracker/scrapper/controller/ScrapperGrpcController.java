@@ -18,7 +18,6 @@ import org.springframework.grpc.server.service.GrpcService;
 public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceImplBase {
 
     private static final int DEFAULT_LIMIT = 100;
-    private static final int DEFAULT_OFFSET = 0;
 
     private final LinkService linkService;
     private final TgChatService tgChatService;
@@ -59,10 +58,10 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
         log.atInfo()
                 .addKeyValue("chat_id", chatId)
                 .addKeyValue("limit", DEFAULT_LIMIT)
-                .addKeyValue("offset", DEFAULT_OFFSET)
+                .addKeyValue("last_link_id", null)
                 .log("Получен gRPC запрос на получение ссылок");
 
-        ListLinksResponse response = linkService.getLinksResponse(chatId, DEFAULT_LIMIT, DEFAULT_OFFSET);
+        ListLinksResponse response = linkService.getLinksResponse(chatId, DEFAULT_LIMIT, null);
 
         responseObserver.onNext(ListLinksResponseMsg.newBuilder()
                 .addAllLinks(mapper.toListMsg(response.links()))

@@ -12,7 +12,7 @@ public interface SubscriptionRepository {
 
     List<Long> findChatIdsByLinkId(Long linkId);
 
-    List<Subscription> findAllByChatId(Long chatId, int limit, int offset);
+    List<Subscription> findByChatId(Long chatId, int limit, Long lastLinkId);
 
     void removeAllByChatId(Long chatId);
 

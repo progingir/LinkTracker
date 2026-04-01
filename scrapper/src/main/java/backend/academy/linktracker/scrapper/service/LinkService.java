@@ -38,11 +38,11 @@ public class LinkService {
     }
 
     @Transactional(readOnly = true)
-    public ListLinksResponse getLinksResponse(Long chatId, int limit, int offset) {
+    public ListLinksResponse getLinksResponse(Long chatId, int limit, Long lastLinkId) {
         validateChatId(chatId);
         checkChatExists(chatId);
 
-        List<LinkResponse> responseList = subscriptionRepository.findAllByChatId(chatId, limit, offset).stream()
+        List<LinkResponse> responseList = subscriptionRepository.findByChatId(chatId, limit, lastLinkId).stream()
                 .map(this::mapToResponse)
                 .toList();
 

@@ -29,4 +29,8 @@ public interface SpringDataJpaLinkRepository extends JpaRepository<LinkEntity, L
     @Modifying
     @Query("DELETE FROM LinkEntity l WHERE l.id = :id")
     void deleteLinkById(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE LinkEntity l SET l.lastCheckAt = :lastCheck WHERE l.id IN :ids")
+    void updateLastCheckAtBatch(@Param("ids") List<Long> ids, @Param("lastCheck") OffsetDateTime lastCheck);
 }

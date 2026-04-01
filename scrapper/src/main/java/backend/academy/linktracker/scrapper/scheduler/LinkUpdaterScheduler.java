@@ -47,10 +47,13 @@ public class LinkUpdaterScheduler {
                         .addKeyValue("link_id", link.id())
                         .addKeyValue("link", link.url())
                         .log("Ошибка при обработке ссылки");
-            } finally {
-                linkRepository.updateLastCheckTime(link.id(), OffsetDateTime.now());
             }
         }
+
+        List<Long> ids = linksToCheck.stream().map(Link::id).toList();
+        linkRepository.updateLastCheckTimeBatch(ids, OffsetDateTime.now());
+
+        log.atInfo().addKeyValue("count", ids.size()).log("Время проверки обновлено для всей пачки ссылок");
     }
 
     private void processSingleLink(Link link) {

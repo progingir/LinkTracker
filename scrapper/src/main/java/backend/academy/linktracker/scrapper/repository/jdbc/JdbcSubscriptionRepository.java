@@ -3,16 +3,26 @@ package backend.academy.linktracker.scrapper.repository.jdbc;
 import backend.academy.linktracker.scrapper.domain.Subscription;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import java.net.URI;
+import java.sql.Array;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 @RequiredArgsConstructor
 public class JdbcSubscriptionRepository implements SubscriptionRepository {
 
     private final JdbcClient jdbcClient;
+
+    private static final RowMapper<Subscription> SUBSCRIPTION_MAPPER = (rs, rowNum) -> {
+        Array sqlArray = rs.getArray("tags");
+        String[] tagsArray = (sqlArray != null) ? (String[]) sqlArray.getArray() : new String[0];
+        List<String> tags = tagsArray.length > 0 ? Arrays.asList(tagsArray) : Collections.emptyList();
+
+        return new Subscription(rs.getLong("chat_id"), rs.getLong("link_id"), URI.create(rs.getString("url")), tags);
+    };
 
     @Override
     public void addSubscription(Long chatId, Long linkId) {
@@ -33,31 +43,27 @@ public class JdbcSubscriptionRepository implements SubscriptionRepository {
     }
 
     @Override
-    public List<Subscription> findAllByChatId(Long chatId, int limit, int offset) {
+    public List<Subscription> findByChatId(Long chatId, int limit, Long lastLinkId) {
+        long pivotId = (lastLinkId == null) ? 0L : lastLinkId;
+
         String sql = """
                 SELECT s.chat_id, s.link_id, l.url, array_remove(array_agg(t.name), NULL) as tags
                 FROM subscription s
                 JOIN link l ON s.link_id = l.id
                 LEFT JOIN subscription_tag st ON s.chat_id = st.chat_id AND s.link_id = st.link_id
                 LEFT JOIN tag t ON st.tag_id = t.id
-                WHERE s.chat_id = :chatId
+                WHERE s.chat_id = :chatId AND s.link_id > :pivotId
                 GROUP BY s.chat_id, s.link_id, l.url
                 ORDER BY s.link_id ASC
-                LIMIT :limit OFFSET :offset
+                LIMIT :limit
             """;
 
         return jdbcClient
                 .sql(sql)
                 .param("chatId", chatId)
+                .param("pivotId", pivotId)
                 .param("limit", limit)
-                .param("offset", offset)
-                .query((rs, rowNum) -> {
-                    String[] tagsArray = (String[]) rs.getArray("tags").getArray();
-                    List<String> tags = tagsArray.length > 0 ? Arrays.asList(tagsArray) : Collections.emptyList();
-
-                    return new Subscription(
-                            rs.getLong("chat_id"), rs.getLong("link_id"), URI.create(rs.getString("url")), tags);
-                })
+                .query(SUBSCRIPTION_MAPPER)
                 .list();
     }
 

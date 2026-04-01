@@ -74,4 +74,12 @@ public class JpaLinkRepository implements LinkRepository {
     private Link mapToDomain(LinkEntity entity) {
         return new Link(entity.getId(), URI.create(entity.getUrl()), entity.getLastUpdate(), entity.getLastCheckAt());
     }
+
+    @Override
+    @Transactional
+    public void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck) {
+        if (ids != null && !ids.isEmpty()) {
+            jpaRepository.updateLastCheckAtBatch(ids, lastCheck);
+        }
+    }
 }

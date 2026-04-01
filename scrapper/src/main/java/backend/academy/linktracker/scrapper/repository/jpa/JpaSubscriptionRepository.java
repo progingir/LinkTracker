@@ -43,13 +43,18 @@ public class JpaSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Subscription> findAllByChatId(Long chatId, int limit, int offset) {
+    public List<Subscription> findByChatId(Long chatId, int limit, Long lastLinkId) {
+        long pivotId = (lastLinkId == null) ? 0L : lastLinkId;
+
         List<SubscriptionEntity> subscriptions = entityManager
-                .createQuery(
-                        "SELECT s FROM SubscriptionEntity s JOIN FETCH s.link WHERE s.id.chatId = :chatId ORDER BY s.link.id ASC",
-                        SubscriptionEntity.class)
+                .createQuery("""
+                SELECT s FROM SubscriptionEntity s
+                JOIN FETCH s.link
+                WHERE s.id.chatId = :chatId AND s.link.id > :pivotId
+                ORDER BY s.link.id ASC
+                """, SubscriptionEntity.class)
                 .setParameter("chatId", chatId)
-                .setFirstResult(offset)
+                .setParameter("pivotId", pivotId)
                 .setMaxResults(limit)
                 .getResultList();
 
@@ -91,27 +96,13 @@ public class JpaSubscriptionRepository implements SubscriptionRepository {
     @Override
     @Transactional
     public void addTagToSubscription(Long chatId, Long linkId, String tagName) {
-        subscriptionRepo.findById(new SubscriptionId(chatId, linkId)).ifPresent(sub -> {
-            boolean hasTag = sub.getTags().stream().anyMatch(t -> t.getName().equals(tagName));
-            if (!hasTag) {
-                tagRepo.upsert(tagName);
-
-                TagEntity tag = tagRepo.findByName(tagName)
-                        .orElseThrow(() -> new IllegalStateException("Тег должен существовать"));
-
-                sub.getTags().add(tag);
-                subscriptionRepo.save(sub);
-            }
-        });
+        subscriptionRepo.addTagNative(chatId, linkId, tagName);
     }
 
     @Override
     @Transactional
     public void removeTagFromSubscription(Long chatId, Long linkId, String tagName) {
-        subscriptionRepo.findById(new SubscriptionId(chatId, linkId)).ifPresent(sub -> {
-            sub.getTags().removeIf(t -> t.getName().equals(tagName));
-            subscriptionRepo.save(sub);
-        });
+        subscriptionRepo.removeTagNative(chatId, linkId, tagName);
     }
 
     private Subscription mapToDomain(SubscriptionEntity entity) {

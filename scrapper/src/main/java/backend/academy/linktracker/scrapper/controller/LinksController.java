@@ -29,10 +29,14 @@ public class LinksController {
     public ListLinksResponse getLinks(
             @RequestHeader("Tg-Chat-Id") Long tgChatId,
             @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(defaultValue = "0") int offset) {
-        log.atInfo().addKeyValue("chat_id", tgChatId).log("Запрос на получение списка ссылок");
+            @RequestParam(required = false) Long lastLinkId) {
 
-        return linkService.getLinksResponse(tgChatId, limit, offset);
+        log.atInfo()
+                .addKeyValue("chat_id", tgChatId)
+                .addKeyValue("last_link_id", lastLinkId)
+                .log("Запрос на получение списка ссылок");
+
+        return linkService.getLinksResponse(tgChatId, limit, lastLinkId);
     }
 
     @PostMapping
