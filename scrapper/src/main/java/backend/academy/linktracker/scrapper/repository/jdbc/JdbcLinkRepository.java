@@ -31,11 +31,9 @@ public class JdbcLinkRepository implements LinkRepository {
 
     @Override
     public Link save(URI url) {
-        String sql = """
-            INSERT INTO link (url, last_update, last_check_at)
-            VALUES (:url, :lastUpdate, :lastCheckAt)
-            RETURNING %s
-            """.formatted(SELECT_FIELDS);
+        String sql = "INSERT INTO link (url, last_update, last_check_at) " + "VALUES (:url, :lastUpdate, :lastCheckAt) "
+                + "RETURNING "
+                + SELECT_FIELDS;
 
         return jdbcClient
                 .sql(sql)
