@@ -18,9 +18,6 @@ public class TgChatService {
     public void registerChat(Long chatId) {
         validateId(chatId);
         try {
-            if (tgChatRepository.existsChat(chatId)) {
-                throw new ChatAlreadyExistsException(chatId);
-            }
             tgChatRepository.addChat(chatId);
         } catch (DataIntegrityViolationException e) {
             throw new ChatAlreadyExistsException(chatId);

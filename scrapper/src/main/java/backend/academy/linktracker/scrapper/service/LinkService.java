@@ -7,6 +7,7 @@ import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.exception.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
 import backend.academy.linktracker.scrapper.exception.LinkNotFoundException;
+import backend.academy.linktracker.scrapper.exception.SubscriptionNotFoundException;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.TgChatRepository;
@@ -27,16 +28,6 @@ public class LinkService {
     private final TgChatRepository tgChatRepository;
     private final SubscriptionRepository subscriptionRepository;
 
-    public LinkResponse addLinkFromExternal(Long chatId, String urlStr, List<String> tags) {
-        validateUrl(urlStr);
-        return addLinkAndMap(chatId, URI.create(urlStr), tags);
-    }
-
-    public LinkResponse removeLinkFromExternal(Long chatId, String urlStr) {
-        validateUrl(urlStr);
-        return removeLinkAndMap(chatId, URI.create(urlStr));
-    }
-
     @Transactional(readOnly = true)
     public ListLinksResponse getLinksResponse(Long chatId, int limit, Long lastLinkId) {
         validateChatId(chatId);
@@ -50,9 +41,10 @@ public class LinkService {
     }
 
     @Transactional
-    public LinkResponse addLinkAndMap(Long chatId, URI uri, List<String> tags) {
+    public LinkResponse addLink(Long chatId, URI uri, List<String> tags) {
         validateChatId(chatId);
         checkChatExists(chatId);
+        validateUri(uri);
 
         Link link;
         try {
@@ -73,7 +65,7 @@ public class LinkService {
 
         subscriptionRepository.addSubscription(chatId, link.id());
 
-        List<String> safeTags = tags == null ? List.of() : tags;
+        List<String> safeTags = (tags == null) ? List.of() : tags;
         for (String tag : safeTags) {
             subscriptionRepository.addTagToSubscription(chatId, link.id(), tag);
         }
@@ -82,23 +74,21 @@ public class LinkService {
     }
 
     @Transactional
-    public LinkResponse removeLinkAndMap(Long chatId, URI uri) {
+    public LinkResponse removeLink(Long chatId, URI uri) {
         validateChatId(chatId);
         checkChatExists(chatId);
 
         Link link = linkRepository.findByUrl(uri).orElseThrow(() -> new LinkNotFoundException(uri));
 
         if (!subscriptionRepository.exists(chatId, link.id())) {
-            throw new LinkNotFoundException(uri);
+            throw new SubscriptionNotFoundException(chatId, uri);
         }
 
         subscriptionRepository.removeSubscription(chatId, link.id());
 
         List<Long> remainingSubscribers = subscriptionRepository.findChatIdsByLinkId(link.id());
-
         if (remainingSubscribers.isEmpty()) {
-            log.atInfo().addKeyValue("url", uri).log("Ссылка больше не отслеживается ни одним чатом. Удаляем из БД");
-
+            log.atInfo().addKeyValue("url", uri).log("Ссылка больше не отслеживается. Удаляем из БД");
             linkRepository.remove(link.id());
         }
 
@@ -111,26 +101,16 @@ public class LinkService {
         }
     }
 
-    private void validateUrl(String urlStr) {
-        if (urlStr == null || urlStr.isBlank()) {
-            throw new IllegalArgumentException("URL не может быть пустым");
+    private void validateUri(URI uri) {
+        if (uri == null) {
+            throw new IllegalArgumentException("URI не может быть пустым");
         }
-        try {
-            URI uri = URI.create(urlStr);
-            String scheme = uri.getScheme();
-
-            if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
-                throw new IllegalArgumentException("Поддерживаются только HTTP и HTTPS ссылки");
-            }
-
-            if (uri.getHost() == null || uri.getHost().isBlank()) {
-                throw new IllegalArgumentException("URL должен содержать доменное имя (например, github.com)");
-            }
-        } catch (IllegalArgumentException e) {
-            throw e;
-        } catch (Exception e) {
-            log.atWarn().setCause(e).addKeyValue("url", urlStr).log("Некорректный синтаксис URL");
-            throw new IllegalArgumentException("Некорректный синтаксис URL: " + urlStr);
+        String scheme = uri.getScheme();
+        if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
+            throw new IllegalArgumentException("Поддерживаются только HTTP и HTTPS ссылки");
+        }
+        if (uri.getHost() == null || uri.getHost().isBlank()) {
+            throw new IllegalArgumentException("URL должен содержать доменное имя");
         }
     }
 

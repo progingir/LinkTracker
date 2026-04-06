@@ -69,13 +69,12 @@ public class JdbcSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public boolean exists(Long chatId, Long linkId) {
-        Integer count = jdbcClient
-                .sql("SELECT count(*) FROM subscription WHERE chat_id = :chatId AND link_id = :linkId")
+        return Boolean.TRUE.equals(jdbcClient
+                .sql("SELECT EXISTS(SELECT 1 FROM subscription WHERE chat_id = :chatId AND link_id = :linkId)")
                 .param("chatId", chatId)
                 .param("linkId", linkId)
-                .query(Integer.class)
-                .single();
-        return count != null && count > 0;
+                .query(Boolean.class)
+                .single());
     }
 
     @Override
@@ -88,17 +87,20 @@ public class JdbcSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public void addTagToSubscription(Long chatId, Long linkId, String tag) {
-        jdbcClient
-                .sql("INSERT INTO tag (name) VALUES (:name) ON CONFLICT DO NOTHING")
-                .param("name", tag)
-                .update();
+        String sql = """
+                WITH t AS (
+                    INSERT INTO tag (name)
+                    VALUES (:name)
+                    ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+                    RETURNING id
+                )
+                INSERT INTO subscription_tag (chat_id, link_id, tag_id)
+                SELECT :chatId, :linkId, id FROM t
+                ON CONFLICT DO NOTHING
+            """;
 
         jdbcClient
-                .sql("""
-                    INSERT INTO subscription_tag (chat_id, link_id, tag_id)
-                    SELECT :chatId, :linkId, id FROM tag WHERE name = :name
-                    ON CONFLICT DO NOTHING
-                """)
+                .sql(sql)
                 .param("chatId", chatId)
                 .param("linkId", linkId)
                 .param("name", tag)

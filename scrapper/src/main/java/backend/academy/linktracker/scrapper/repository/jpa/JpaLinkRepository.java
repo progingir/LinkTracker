@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 public class JpaLinkRepository implements LinkRepository {
@@ -21,7 +20,6 @@ public class JpaLinkRepository implements LinkRepository {
     private final SpringDataJpaLinkRepository jpaRepository;
 
     @Override
-    @Transactional
     public Link save(URI url) {
         LinkEntity entity = new LinkEntity();
         entity.setUrl(url.toString());
@@ -34,25 +32,21 @@ public class JpaLinkRepository implements LinkRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Link> findByUrl(URI url) {
         return jpaRepository.findByUrl(url.toString()).map(this::mapToDomain);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Link> findById(Long id) {
         return jpaRepository.findById(id).map(this::mapToDomain);
     }
 
     @Override
-    @Transactional
     public void remove(Long id) {
         jpaRepository.deleteLinkById(id);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Link> findOldest(int limit) {
         return jpaRepository.findAllByOrderByLastCheckAtAsc(PageRequest.of(0, limit)).stream()
                 .map(this::mapToDomain)
@@ -60,13 +54,11 @@ public class JpaLinkRepository implements LinkRepository {
     }
 
     @Override
-    @Transactional
     public void updateLastCheckTime(Long linkId, OffsetDateTime lastCheck) {
         jpaRepository.updateLastCheckAt(linkId, lastCheck);
     }
 
     @Override
-    @Transactional
     public void updateLastUpdateTime(Long linkId, OffsetDateTime lastUpdate) {
         jpaRepository.updateLastUpdateTime(linkId, lastUpdate);
     }
@@ -76,10 +68,7 @@ public class JpaLinkRepository implements LinkRepository {
     }
 
     @Override
-    @Transactional
     public void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck) {
-        if (ids != null && !ids.isEmpty()) {
-            jpaRepository.updateLastCheckAtBatch(ids, lastCheck);
-        }
+        jpaRepository.updateLastCheckAtBatch(ids, lastCheck);
     }
 }

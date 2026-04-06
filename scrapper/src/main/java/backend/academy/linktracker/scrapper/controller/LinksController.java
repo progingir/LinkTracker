@@ -47,7 +47,7 @@ public class LinksController {
                 .addKeyValue("link", request.link())
                 .log("Запрос на добавление ссылки");
 
-        return linkService.addLinkAndMap(tgChatId, request.link(), request.tags());
+        return linkService.addLink(tgChatId, request.link(), request.tags());
     }
 
     @DeleteMapping
@@ -58,6 +58,6 @@ public class LinksController {
                 .addKeyValue("link", request.link())
                 .log("Запрос на удаление ссылки");
 
-        return linkService.removeLinkAndMap(tgChatId, request.link());
+        return linkService.removeLink(tgChatId, request.link());
     }
 }

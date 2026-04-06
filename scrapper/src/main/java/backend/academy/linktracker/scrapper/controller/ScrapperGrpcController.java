@@ -8,6 +8,7 @@ import backend.academy.linktracker.scrapper.mapper.ScrapperGrpcMapper;
 import backend.academy.linktracker.scrapper.service.LinkService;
 import backend.academy.linktracker.scrapper.service.TgChatService;
 import io.grpc.stub.StreamObserver;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
@@ -80,7 +81,7 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
                 .addKeyValue("link", link)
                 .log("Получен gRPC запрос на добавление ссылки");
 
-        LinkResponse resp = linkService.addLinkFromExternal(chatId, link, request.getTagsList());
+        LinkResponse resp = linkService.addLink(chatId, URI.create(link), request.getTagsList());
 
         responseObserver.onNext(mapper.toMsg(resp));
         responseObserver.onCompleted();
@@ -96,7 +97,7 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
                 .addKeyValue("link", link)
                 .log("Получен gRPC запрос на удаление ссылки");
 
-        LinkResponse resp = linkService.removeLinkFromExternal(chatId, link);
+        LinkResponse resp = linkService.removeLink(chatId, URI.create(link));
 
         responseObserver.onNext(mapper.toMsg(resp));
         responseObserver.onCompleted();

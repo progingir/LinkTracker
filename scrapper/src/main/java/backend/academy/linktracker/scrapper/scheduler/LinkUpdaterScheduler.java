@@ -11,6 +11,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ public class LinkUpdaterScheduler {
     private int batchSize;
 
     @Scheduled(fixedDelayString = "${app.scheduler.interval}")
+    @SchedulerLock(name = "LinkUpdater_update", lockAtMostFor = "5m", lockAtLeastFor = "30s")
     public void update() {
         log.atInfo().addKeyValue("batch_size", batchSize).log("Начало фоновой проверки обновлений");
 
@@ -57,30 +59,39 @@ public class LinkUpdaterScheduler {
     }
 
     private void processSingleLink(Link link) {
-        updateServices.stream()
-                .filter(service -> service.supports(link.url()))
+        LinkUpdateService service = updateServices.stream()
+                .filter(s -> s.supports(link.url()))
                 .findFirst()
-                .ifPresent(service -> {
-                    service.fetchUpdateDate(link.url()).ifPresent(externalDate -> {
-                        if (externalDate.isAfter(link.lastUpdate())) {
+                .orElse(null);
 
-                            List<Long> chatIds = subscriptionRepository.findChatIdsByLinkId(link.id());
+        if (service == null) {
+            log.atWarn()
+                    .addKeyValue("link_id", link.id())
+                    .addKeyValue("url", link.url())
+                    .log("Для ссылки из базы данных не найден подходящий обработчик (LinkUpdateService)");
+            return;
+        }
 
-                            if (!chatIds.isEmpty()) {
-                                log.atInfo()
-                                        .addKeyValue("link_id", link.id())
-                                        .addKeyValue("link", link.url())
-                                        .addKeyValue("chats_count", chatIds.size())
-                                        .log("Найдено обновление для ссылки, уведомляю чаты");
+        OffsetDateTime externalDate = service.fetchUpdateDate(link.url()).orElse(null);
 
-                                String description = service.getUpdateDescription(link.url(), externalDate);
-                                notifyBot(link.id(), link.url(), description, chatIds);
+        if (externalDate == null || !externalDate.isAfter(link.lastUpdate())) {
+            return;
+        }
 
-                                linkRepository.updateLastUpdateTime(link.id(), externalDate);
-                            }
-                        }
-                    });
-                });
+        List<Long> chatIds = subscriptionRepository.findChatIdsByLinkId(link.id());
+
+        if (!chatIds.isEmpty()) {
+            log.atInfo()
+                    .addKeyValue("link_id", link.id())
+                    .addKeyValue("link", link.url())
+                    .addKeyValue("chats_count", chatIds.size())
+                    .log("Найдено обновление для ссылки, уведомляю чаты");
+
+            String description = service.getUpdateDescription(link.url(), externalDate);
+            notifyBot(link.id(), link.url(), description, chatIds);
+        }
+
+        linkRepository.updateLastUpdateTime(link.id(), externalDate);
     }
 
     private void notifyBot(Long linkId, URI url, String description, List<Long> chatIds) {

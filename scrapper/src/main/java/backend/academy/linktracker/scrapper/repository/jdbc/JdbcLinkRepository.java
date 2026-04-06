@@ -93,8 +93,6 @@ public class JdbcLinkRepository implements LinkRepository {
 
     @Override
     public void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck) {
-        if (ids.isEmpty()) return;
-
         jdbcClient
                 .sql("UPDATE link SET last_check_at = :lastCheck WHERE id IN (:ids)")
                 .param("lastCheck", lastCheck)

@@ -6,7 +6,6 @@ import backend.academy.linktracker.scrapper.repository.TagRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 public class JpaTagRepository implements TagRepository {
@@ -14,7 +13,6 @@ public class JpaTagRepository implements TagRepository {
     private final SpringDataJpaTagRepository jpaRepository;
 
     @Override
-    @Transactional
     public Tag save(String name) {
         jpaRepository.upsert(name);
         TagEntity entity = jpaRepository
@@ -25,19 +23,16 @@ public class JpaTagRepository implements TagRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Tag> findById(Long id) {
         return jpaRepository.findById(id).map(this::mapToDomain);
     }
 
     @Override
-    @Transactional
     public void delete(Long id) {
         jpaRepository.deleteById(id);
     }
 
     @Override
-    @Transactional
     public void update(Long id, String newName) {
         jpaRepository.findById(id).ifPresent(entity -> {
             entity.setName(newName);
@@ -46,7 +41,6 @@ public class JpaTagRepository implements TagRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Tag> findAllByChatId(Long chatId) {
         return jpaRepository.findAllByChatId(chatId).stream()
                 .map(this::mapToDomain)

@@ -8,7 +8,6 @@ import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 public class JpaSubscriptionRepository implements SubscriptionRepository {
@@ -20,7 +19,6 @@ public class JpaSubscriptionRepository implements SubscriptionRepository {
     private final jakarta.persistence.EntityManager entityManager;
 
     @Override
-    @Transactional
     public void addSubscription(Long chatId, Long linkId) {
         SubscriptionId id = new SubscriptionId(chatId, linkId);
         if (subscriptionRepo.existsById(id)) {
@@ -36,13 +34,11 @@ public class JpaSubscriptionRepository implements SubscriptionRepository {
     }
 
     @Override
-    @Transactional
     public void removeSubscription(Long chatId, Long linkId) {
         subscriptionRepo.deleteById(new SubscriptionId(chatId, linkId));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Subscription> findByChatId(Long chatId, int limit, Long lastLinkId) {
         long pivotId = (lastLinkId == null) ? 0L : lastLinkId;
 
@@ -76,31 +72,26 @@ public class JpaSubscriptionRepository implements SubscriptionRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public boolean exists(Long chatId, Long linkId) {
         return subscriptionRepo.existsById(new SubscriptionId(chatId, linkId));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Long> findChatIdsByLinkId(Long linkId) {
         return subscriptionRepo.findChatIdsByLinkId(linkId);
     }
 
     @Override
-    @Transactional
     public void removeAllByChatId(Long chatId) {
         subscriptionRepo.deleteByIdChatId(chatId);
     }
 
     @Override
-    @Transactional
     public void addTagToSubscription(Long chatId, Long linkId, String tagName) {
         subscriptionRepo.addTagNative(chatId, linkId, tagName);
     }
 
     @Override
-    @Transactional
     public void removeTagFromSubscription(Long chatId, Long linkId, String tagName) {
         subscriptionRepo.removeTagNative(chatId, linkId, tagName);
     }
