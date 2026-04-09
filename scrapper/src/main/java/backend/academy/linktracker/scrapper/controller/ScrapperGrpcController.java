@@ -8,6 +8,7 @@ import backend.academy.linktracker.scrapper.mapper.ScrapperGrpcMapper;
 import backend.academy.linktracker.scrapper.service.LinkService;
 import backend.academy.linktracker.scrapper.service.TgChatService;
 import io.grpc.stub.StreamObserver;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
@@ -16,6 +17,8 @@ import org.springframework.grpc.server.service.GrpcService;
 @GrpcService
 @RequiredArgsConstructor
 public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceImplBase {
+
+    private static final int DEFAULT_LIMIT = 100;
 
     private final LinkService linkService;
     private final TgChatService tgChatService;
@@ -27,21 +30,39 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
 
     @Override
     public void registerChat(ChatRequest request, StreamObserver<Empty> responseObserver) {
-        tgChatService.registerChat(getChatId());
+        Long chatId = getChatId();
+
+        log.atInfo().addKeyValue("chat_id", chatId).log("Получен gRPC запрос на регистрацию чата");
+
+        tgChatService.registerChat(chatId);
+
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
     }
 
     @Override
     public void deleteChat(ChatRequest request, StreamObserver<Empty> responseObserver) {
-        tgChatService.deleteChat(getChatId());
+        Long chatId = getChatId();
+
+        log.atInfo().addKeyValue("chat_id", chatId).log("Получен gRPC запрос на удаление чата");
+
+        tgChatService.deleteChat(chatId);
+
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
     }
 
     @Override
     public void getLinks(ChatRequest request, StreamObserver<ListLinksResponseMsg> responseObserver) {
-        ListLinksResponse response = linkService.getLinksResponse(getChatId());
+        Long chatId = getChatId();
+
+        log.atInfo()
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("limit", DEFAULT_LIMIT)
+                .addKeyValue("last_link_id", null)
+                .log("Получен gRPC запрос на получение ссылок");
+
+        ListLinksResponse response = linkService.getLinksResponse(chatId, DEFAULT_LIMIT, null);
 
         responseObserver.onNext(ListLinksResponseMsg.newBuilder()
                 .addAllLinks(mapper.toListMsg(response.links()))
@@ -52,7 +73,15 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
 
     @Override
     public void addLink(AddLinkRequestMsg request, StreamObserver<LinkResponseMsg> responseObserver) {
-        LinkResponse resp = linkService.addLinkFromExternal(getChatId(), request.getLink(), request.getTagsList());
+        Long chatId = getChatId();
+        String link = request.getLink();
+
+        log.atInfo()
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("link", link)
+                .log("Получен gRPC запрос на добавление ссылки");
+
+        LinkResponse resp = linkService.addLink(chatId, URI.create(link), request.getTagsList());
 
         responseObserver.onNext(mapper.toMsg(resp));
         responseObserver.onCompleted();
@@ -60,7 +89,15 @@ public class ScrapperGrpcController extends ScrapperServiceGrpc.ScrapperServiceI
 
     @Override
     public void removeLink(RemoveLinkRequestMsg request, StreamObserver<LinkResponseMsg> responseObserver) {
-        LinkResponse resp = linkService.removeLinkFromExternal(getChatId(), request.getLink());
+        Long chatId = getChatId();
+        String link = request.getLink();
+
+        log.atInfo()
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("link", link)
+                .log("Получен gRPC запрос на удаление ссылки");
+
+        LinkResponse resp = linkService.removeLink(chatId, URI.create(link));
 
         responseObserver.onNext(mapper.toMsg(resp));
         responseObserver.onCompleted();

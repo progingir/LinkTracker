@@ -7,15 +7,19 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LinkRepository {
-    List<Link> findAllByChatId(Long chatId);
+    Link save(URI url);
 
-    Optional<Link> save(Long chatId, URI url, List<String> tags);
+    Optional<Link> findByUrl(URI url);
 
-    Optional<Link> remove(Long chatId, URI url);
+    Optional<Link> findById(Long id);
 
-    void removeAllByChatId(Long chatId);
+    void remove(Long id);
 
-    List<Link> findAll();
+    List<Link> findOldest(int limit);
 
-    void updateLastUpdate(Long linkId, OffsetDateTime updatedAt);
+    void updateLastCheckTime(Long linkId, OffsetDateTime lastCheck);
+
+    void updateLastUpdateTime(Long linkId, OffsetDateTime lastUpdate);
+
+    void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck);
 }
