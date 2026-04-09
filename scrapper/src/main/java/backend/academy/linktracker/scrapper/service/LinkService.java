@@ -1,18 +1,23 @@
 package backend.academy.linktracker.scrapper.service;
 
 import backend.academy.linktracker.scrapper.domain.Link;
+import backend.academy.linktracker.scrapper.domain.Subscription;
 import backend.academy.linktracker.scrapper.dto.LinkResponse;
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
 import backend.academy.linktracker.scrapper.exception.ChatNotFoundException;
 import backend.academy.linktracker.scrapper.exception.LinkAlreadyTrackedException;
 import backend.academy.linktracker.scrapper.exception.LinkNotFoundException;
+import backend.academy.linktracker.scrapper.exception.SubscriptionNotFoundException;
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.TgChatRepository;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -21,44 +26,73 @@ public class LinkService {
 
     private final LinkRepository linkRepository;
     private final TgChatRepository tgChatRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
-    public LinkResponse addLinkFromExternal(Long chatId, String urlStr, List<String> tags) {
-        validateUrl(urlStr);
-        return addLinkAndMap(chatId, URI.create(urlStr), tags);
-    }
-
-    public LinkResponse removeLinkFromExternal(Long chatId, String urlStr) {
-        validateUrl(urlStr);
-        return removeLinkAndMap(chatId, URI.create(urlStr));
-    }
-
-    public ListLinksResponse getLinksResponse(Long chatId) {
+    @Transactional(readOnly = true)
+    public ListLinksResponse getLinksResponse(Long chatId, int limit, Long lastLinkId) {
         validateChatId(chatId);
         checkChatExists(chatId);
 
-        List<LinkResponse> responseList = linkRepository.findAllByChatId(chatId).stream()
+        List<LinkResponse> responseList = subscriptionRepository.findByChatId(chatId, limit, lastLinkId).stream()
                 .map(this::mapToResponse)
                 .toList();
 
         return new ListLinksResponse(responseList, responseList.size());
     }
 
-    public LinkResponse addLinkAndMap(Long chatId, URI uri, List<String> tags) {
+    @Transactional
+    public LinkResponse addLink(Long chatId, URI uri, List<String> tags) {
         validateChatId(chatId);
         checkChatExists(chatId);
+        validateUri(uri);
 
-        Link savedLink = linkRepository.save(chatId, uri, tags).orElseThrow(() -> new LinkAlreadyTrackedException(uri));
+        Link link;
+        try {
+            link = linkRepository.findByUrl(uri).orElseGet(() -> linkRepository.save(uri));
+        } catch (DataIntegrityViolationException e) {
+            log.atInfo()
+                    .addKeyValue("url", uri)
+                    .log("Обнаружено состояние гонки для URL. Извлекаем существующую ссылку");
 
-        return mapToResponse(savedLink);
+            link = linkRepository
+                    .findByUrl(uri)
+                    .orElseThrow(() -> new IllegalStateException("Ссылка должна существовать, но не найдена", e));
+        }
+
+        if (subscriptionRepository.exists(chatId, link.id())) {
+            throw new LinkAlreadyTrackedException(uri);
+        }
+
+        subscriptionRepository.addSubscription(chatId, link.id());
+
+        List<String> safeTags = (tags == null) ? List.of() : tags;
+        for (String tag : safeTags) {
+            subscriptionRepository.addTagToSubscription(chatId, link.id(), tag);
+        }
+
+        return new LinkResponse(link.id(), link.url(), safeTags);
     }
 
-    public LinkResponse removeLinkAndMap(Long chatId, URI uri) {
+    @Transactional
+    public LinkResponse removeLink(Long chatId, URI uri) {
         validateChatId(chatId);
         checkChatExists(chatId);
 
-        Link removedLink = linkRepository.remove(chatId, uri).orElseThrow(() -> new LinkNotFoundException(uri));
+        Link link = linkRepository.findByUrl(uri).orElseThrow(() -> new LinkNotFoundException(uri));
 
-        return mapToResponse(removedLink);
+        if (!subscriptionRepository.exists(chatId, link.id())) {
+            throw new SubscriptionNotFoundException(chatId, uri);
+        }
+
+        subscriptionRepository.removeSubscription(chatId, link.id());
+
+        List<Long> remainingSubscribers = subscriptionRepository.findChatIdsByLinkId(link.id());
+        if (remainingSubscribers.isEmpty()) {
+            log.atInfo().addKeyValue("url", uri).log("Ссылка больше не отслеживается. Удаляем из БД");
+            linkRepository.remove(link.id());
+        }
+
+        return new LinkResponse(link.id(), link.url(), List.of());
     }
 
     private void validateChatId(Long chatId) {
@@ -67,15 +101,16 @@ public class LinkService {
         }
     }
 
-    private void validateUrl(String urlStr) {
-        if (urlStr == null || urlStr.isBlank()) {
-            throw new IllegalArgumentException("URL не может быть пустым");
+    private void validateUri(URI uri) {
+        if (uri == null) {
+            throw new IllegalArgumentException("URI не может быть пустым");
         }
-        try {
-            URI.create(urlStr);
-        } catch (Exception e) {
-            log.atWarn().setCause(e).addKeyValue("url", urlStr).log("Некорректный формат URL");
-            throw new IllegalArgumentException("Некорректный формат URL: " + urlStr);
+        String scheme = uri.getScheme();
+        if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
+            throw new IllegalArgumentException("Поддерживаются только HTTP и HTTPS ссылки");
+        }
+        if (uri.getHost() == null || uri.getHost().isBlank()) {
+            throw new IllegalArgumentException("URL должен содержать доменное имя");
         }
     }
 
@@ -85,7 +120,7 @@ public class LinkService {
         }
     }
 
-    private LinkResponse mapToResponse(Link link) {
-        return new LinkResponse(link.id(), link.url(), link.tags());
+    private LinkResponse mapToResponse(Subscription subscription) {
+        return new LinkResponse(subscription.linkId(), subscription.url(), subscription.tags());
     }
 }

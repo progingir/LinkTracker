@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -25,10 +26,17 @@ public class LinksController {
     private final LinkService linkService;
 
     @GetMapping
-    public ListLinksResponse getLinks(@RequestHeader("Tg-Chat-Id") Long tgChatId) {
-        log.atInfo().addKeyValue("chat_id", tgChatId).log("Запрос на получение списка ссылок");
+    public ListLinksResponse getLinks(
+            @RequestHeader("Tg-Chat-Id") Long tgChatId,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) Long lastLinkId) {
 
-        return linkService.getLinksResponse(tgChatId);
+        log.atInfo()
+                .addKeyValue("chat_id", tgChatId)
+                .addKeyValue("last_link_id", lastLinkId)
+                .log("Запрос на получение списка ссылок");
+
+        return linkService.getLinksResponse(tgChatId, limit, lastLinkId);
     }
 
     @PostMapping
@@ -39,7 +47,7 @@ public class LinksController {
                 .addKeyValue("link", request.link())
                 .log("Запрос на добавление ссылки");
 
-        return linkService.addLinkAndMap(tgChatId, request.link(), request.tags());
+        return linkService.addLink(tgChatId, request.link(), request.tags());
     }
 
     @DeleteMapping
@@ -50,6 +58,6 @@ public class LinksController {
                 .addKeyValue("link", request.link())
                 .log("Запрос на удаление ссылки");
 
-        return linkService.removeLinkAndMap(tgChatId, request.link());
+        return linkService.removeLink(tgChatId, request.link());
     }
 }
