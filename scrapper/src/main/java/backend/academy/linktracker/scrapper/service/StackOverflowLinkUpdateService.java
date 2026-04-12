@@ -86,11 +86,11 @@ public class StackOverflowLinkUpdateService implements LinkUpdateService {
         String safePreview = TextUtil.escapeMarkdown(TextUtil.truncate(body, 200));
 
         return String.format(
-                "🔔 **Обновление на StackOverflow!**\n" + "📌 **Тема:** %s\n"
-                        + "Тип: %s\n"
-                        + "👤 Автор: %s\n"
-                        + "⏱ Время: %s\n\n"
-                        + "📄 Превью:\n%s",
+                "🔔 **Обновление на StackOverflow!**%n📌 **Тема:** %s%n"
+                        + "Тип: %s%n"
+                        + "👤 Автор: %s%n"
+                        + "⏱ Время: %s%n%n"
+                        + "📄 Превью:%n%s",
                 safeTitle, type, safeAuthor, time, safePreview);
     }
 }
