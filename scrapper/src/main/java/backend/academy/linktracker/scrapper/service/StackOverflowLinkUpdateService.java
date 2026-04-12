@@ -10,7 +10,6 @@ import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -51,11 +50,9 @@ public class StackOverflowLinkUpdateService implements LinkUpdateService {
         }
 
         if (!newAnswers.isEmpty() || !newComments.isEmpty()) {
-            String questionTitle = "Неизвестная тема";
-            Optional<StackOverflowResponse.Item> questionOpt = client.fetchQuestion(questionId);
-            if (questionOpt.isPresent()) {
-                questionTitle = questionOpt.get().title();
-            }
+            String questionTitle = client.fetchQuestion(questionId)
+                    .map(StackOverflowResponse.Item::title)
+                    .orElse("Неизвестная тема");
 
             for (var answer : newAnswers) {
                 results.add(new UpdateResult(
