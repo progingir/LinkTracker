@@ -30,28 +30,22 @@ public class GitHubLinkUpdateService implements LinkUpdateService {
 
         for (GitHubEventResponse event : events) {
             if (lastKnownUpdate == null || event.createdAt().isAfter(lastKnownUpdate)) {
-                boolean isIssue =
-                        "IssuesEvent".equals(event.type()) && event.payload().issue() != null;
-                boolean isPR = "PullRequestEvent".equals(event.type())
-                        && event.payload().pullRequest() != null;
+                boolean isIssue = "IssuesEvent".equals(event.type()) && event.payload().issue() != null;
+                boolean isPR = "PullRequestEvent".equals(event.type()) && event.payload().pullRequest() != null;
 
                 if ((isIssue || isPR) && "opened".equals(event.payload().action())) {
                     String safeAuthor = TextUtil.escapeMarkdown(event.actor().login());
-                    String rawTitle = isIssue
-                            ? event.payload().issue().title()
-                            : event.payload().pullRequest().title();
+                    String rawTitle = isIssue ? event.payload().issue().title() : event.payload().pullRequest().title();
                     String safeTitle = TextUtil.escapeMarkdown(rawTitle);
 
-                    String rawBody = isIssue
-                            ? event.payload().issue().body()
-                            : event.payload().pullRequest().body();
-                    String preview = TextUtil.escapeMarkdown(TextUtil.truncate(rawBody, 200));
+                    String rawBody = isIssue ? event.payload().issue().body() : event.payload().pullRequest().body();
+                    String preview = TextUtil.escapeMarkdown(TextUtil.truncate(rawBody == null ? "" : rawBody, 200));
 
                     String eventName = isIssue ? "Новый Issue" : "Новый Pull Request";
 
                     String description = String.format(
-                            "🛠 **%s** в репозитории!\n👤 Автор: %s\n📝 Тема: %s\n⏱ Время: %s\n\n📄 Превью:\n%s",
-                            eventName, safeAuthor, safeTitle, event.createdAt(), preview);
+                        "🛠 **%s** в репозитории!%n👤 Автор: %s%n📝 Тема: %s%n⏱ Время: %s%n%n📄 Превью:%n%s",
+                        eventName, safeAuthor, safeTitle, event.createdAt(), preview);
 
                     results.add(new UpdateResult(event.createdAt(), description));
                 }
