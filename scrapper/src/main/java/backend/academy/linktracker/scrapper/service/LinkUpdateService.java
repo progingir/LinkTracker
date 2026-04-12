@@ -1,13 +1,13 @@
 package backend.academy.linktracker.scrapper.service;
 
+import backend.academy.linktracker.scrapper.dto.UpdateResult;
 import java.net.URI;
 import java.time.OffsetDateTime;
-import java.util.Optional;
+import java.util.List;
 
 public interface LinkUpdateService {
+
     boolean supports(URI url);
 
-    Optional<OffsetDateTime> fetchUpdateDate(URI url);
-
-    String getUpdateDescription(URI url, OffsetDateTime updateDate);
+    List<UpdateResult> fetchUpdates(URI url, OffsetDateTime lastKnownUpdate);
 }

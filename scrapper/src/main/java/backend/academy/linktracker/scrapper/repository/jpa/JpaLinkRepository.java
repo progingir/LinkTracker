@@ -25,6 +25,7 @@ public class JpaLinkRepository implements LinkRepository {
         entity.setUrl(url.toString());
         entity.setLastUpdate(OffsetDateTime.now());
         entity.setLastCheckAt(NEVER_CHECKED);
+        entity.setErrorCount(0);
 
         entity = jpaRepository.saveAndFlush(entity);
 
@@ -63,8 +64,23 @@ public class JpaLinkRepository implements LinkRepository {
         jpaRepository.updateLastUpdateTime(linkId, lastUpdate);
     }
 
+    @Override
+    public void incrementErrorCount(Long linkId) {
+        jpaRepository.incrementErrorCount(linkId);
+    }
+
+    @Override
+    public void resetErrorCount(Long linkId) {
+        jpaRepository.resetErrorCount(linkId);
+    }
+
     private Link mapToDomain(LinkEntity entity) {
-        return new Link(entity.getId(), URI.create(entity.getUrl()), entity.getLastUpdate(), entity.getLastCheckAt());
+        return new Link(
+                entity.getId(),
+                URI.create(entity.getUrl()),
+                entity.getLastUpdate(),
+                entity.getLastCheckAt(),
+                entity.getErrorCount());
     }
 
     @Override

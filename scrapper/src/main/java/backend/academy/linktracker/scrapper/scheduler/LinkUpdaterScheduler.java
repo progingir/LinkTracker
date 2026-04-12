@@ -1,100 +1,131 @@
 package backend.academy.linktracker.scrapper.scheduler;
 
-import backend.academy.linktracker.scrapper.client.BotNotificationClient;
 import backend.academy.linktracker.scrapper.domain.Link;
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
-import backend.academy.linktracker.scrapper.repository.LinkRepository;
-import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
-import backend.academy.linktracker.scrapper.service.LinkUpdateService;
-import java.net.URI;
+import backend.academy.linktracker.scrapper.service.LinkService;
+import backend.academy.linktracker.scrapper.service.LinkUpdateManager;
+import backend.academy.linktracker.scrapper.service.NotificationFormatter;
+import backend.academy.linktracker.scrapper.service.SubscriptionService;
+import backend.academy.linktracker.scrapper.service.UpdateSender;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class LinkUpdaterScheduler {
 
-    private final LinkRepository linkRepository;
-    private final SubscriptionRepository subscriptionRepository;
-    private final List<LinkUpdateService> updateServices;
-    private final BotNotificationClient botNotificationClient;
+    private final LinkService linkService;
+    private final SubscriptionService subscriptionService;
+    private final LinkUpdateManager updateManager;
+    private final NotificationFormatter formatter;
+    private final UpdateSender updateSender;
+    private final Executor executor;
 
-    @Value("${app.scheduler.batch-size}")
+    @Value("${app.scheduler.batch-size:50}")
     private int batchSize;
+
+    @Value("${app.scheduler.threads-count:4}")
+    private int threadsCount;
+
+    public LinkUpdaterScheduler(
+            LinkService linkService,
+            SubscriptionService subscriptionService,
+            LinkUpdateManager updateManager,
+            NotificationFormatter formatter,
+            UpdateSender updateSender,
+            @Qualifier("linkUpdaterExecutor") Executor executor) {
+        this.linkService = linkService;
+        this.subscriptionService = subscriptionService;
+        this.updateManager = updateManager;
+        this.formatter = formatter;
+        this.updateSender = updateSender;
+        this.executor = executor;
+    }
 
     @Scheduled(fixedDelayString = "${app.scheduler.interval}")
     @SchedulerLock(name = "LinkUpdater_update", lockAtMostFor = "5m", lockAtLeastFor = "30s")
     public void update() {
-        log.atInfo().addKeyValue("batch_size", batchSize).log("Начало фоновой проверки обновлений");
-
-        List<Link> linksToCheck = linkRepository.findOldest(batchSize);
-
+        List<Link> linksToCheck = linkService.findOldest(batchSize);
         if (linksToCheck.isEmpty()) {
             return;
         }
 
-        for (Link link : linksToCheck) {
+        ConcurrentMap<Long, List<String>> failedLinksByChat = new ConcurrentHashMap<>();
+
+        List<List<Link>> chunks = partition(linksToCheck, getChunkSize(linksToCheck.size(), threadsCount));
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        for (List<Link> chunk : chunks) {
+            futures.add(CompletableFuture.runAsync(() -> processChunk(chunk, failedLinksByChat), executor));
+        }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        sendErrorReports(failedLinksByChat);
+
+        linkService.updateLastCheckTimeBatch(linksToCheck.stream().map(Link::id).toList(), OffsetDateTime.now());
+
+        log.atInfo().addKeyValue("batch_size", linksToCheck.size()).log("Проверка батча ссылок успешно завершена");
+    }
+
+    private void processChunk(List<Link> chunk, ConcurrentMap<Long, List<String>> failedLinksByChat) {
+        for (Link link : chunk) {
             try {
-                processSingleLink(link);
+                updateManager.processLinkUpdate(link).ifPresent(url -> {
+                    List<Long> chatIds = subscriptionService.getChatIdsByLinkId(link.id());
+                    for (Long chatId : chatIds) {
+                        failedLinksByChat
+                                .computeIfAbsent(chatId, k -> new CopyOnWriteArrayList<>())
+                                .add(url);
+                    }
+                });
             } catch (Exception e) {
                 log.atError()
-                        .setCause(e)
+                        .addKeyValue("url", link.url())
                         .addKeyValue("link_id", link.id())
-                        .addKeyValue("link", link.url())
-                        .log("Ошибка при обработке ссылки");
+                        .setCause(e)
+                        .log("Критический сбой при обработке ссылки");
             }
         }
-
-        List<Long> ids = linksToCheck.stream().map(Link::id).toList();
-        linkRepository.updateLastCheckTimeBatch(ids, OffsetDateTime.now());
-
-        log.atInfo().addKeyValue("count", ids.size()).log("Время проверки обновлено для всей пачки ссылок");
     }
 
-    private void processSingleLink(Link link) {
-        LinkUpdateService service = updateServices.stream()
-                .filter(s -> s.supports(link.url()))
-                .findFirst()
-                .orElse(null);
-
-        if (service == null) {
-            log.atWarn()
-                    .addKeyValue("link_id", link.id())
-                    .addKeyValue("url", link.url())
-                    .log("Для ссылки из базы данных не найден подходящий обработчик (LinkUpdateService)");
-            return;
-        }
-
-        OffsetDateTime externalDate = service.fetchUpdateDate(link.url()).orElse(null);
-
-        if (externalDate == null || !externalDate.isAfter(link.lastUpdate())) {
-            return;
-        }
-
-        List<Long> chatIds = subscriptionRepository.findChatIdsByLinkId(link.id());
-
-        if (!chatIds.isEmpty()) {
-            log.atInfo()
-                    .addKeyValue("link_id", link.id())
-                    .addKeyValue("link", link.url())
-                    .addKeyValue("chats_count", chatIds.size())
-                    .log("Найдено обновление для ссылки, уведомляю чаты");
-
-            String description = service.getUpdateDescription(link.url(), externalDate);
-            notifyBot(link.id(), link.url(), description, chatIds);
-        }
-
-        linkRepository.updateLastUpdateTime(link.id(), externalDate);
+    private void sendErrorReports(ConcurrentMap<Long, List<String>> failedLinksByChat) {
+        failedLinksByChat.forEach((chatId, urls) -> {
+            try {
+                String reportText = formatter.formatErrorReport(urls);
+                updateSender.sendUpdate(LinkUpdate.systemReport(reportText, List.of(chatId)));
+            } catch (Exception e) {
+                log.atError()
+                        .addKeyValue("chat_id", chatId)
+                        .addKeyValue("failed_links_count", urls.size())
+                        .setCause(e)
+                        .log("Не удалось отправить системный отчет в чат");
+            }
+        });
     }
 
-    private void notifyBot(Long linkId, URI url, String description, List<Long> chatIds) {
-        botNotificationClient.sendUpdate(new LinkUpdate(linkId, url, description, chatIds));
+    private <T> List<List<T>> partition(List<T> list, int size) {
+        List<List<T>> partitions = new ArrayList<>();
+        if (size <= 0) return partitions;
+        for (int i = 0; i < list.size(); i += size) {
+            partitions.add(new ArrayList<>(list.subList(i, Math.min(i + size, list.size()))));
+        }
+        return partitions;
+    }
+
+    private int getChunkSize(int totalSize, int threads) {
+        return (int) Math.ceil((double) totalSize / Math.max(1, threads));
     }
 }

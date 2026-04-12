@@ -19,7 +19,11 @@ public interface LinkRepository {
 
     void updateLastCheckTime(Long linkId, OffsetDateTime lastCheck);
 
+    void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck);
+
     void updateLastUpdateTime(Long linkId, OffsetDateTime lastUpdate);
 
-    void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck);
+    void incrementErrorCount(Long linkId);
+
+    void resetErrorCount(Long linkId);
 }

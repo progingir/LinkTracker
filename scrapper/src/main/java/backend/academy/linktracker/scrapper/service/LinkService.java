@@ -12,6 +12,7 @@ import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.TgChatRepository;
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,6 +94,31 @@ public class LinkService {
         }
 
         return new LinkResponse(link.id(), link.url(), List.of());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Link> findOldest(int limit) {
+        return linkRepository.findOldest(limit);
+    }
+
+    @Transactional
+    public void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck) {
+        linkRepository.updateLastCheckTimeBatch(ids, lastCheck);
+    }
+
+    @Transactional
+    public void updateLastUpdateTime(Long linkId, OffsetDateTime lastUpdate) {
+        linkRepository.updateLastUpdateTime(linkId, lastUpdate);
+    }
+
+    @Transactional
+    public void incrementErrorCount(Long linkId) {
+        linkRepository.incrementErrorCount(linkId);
+    }
+
+    @Transactional
+    public void resetErrorCount(Long linkId) {
+        linkRepository.resetErrorCount(linkId);
     }
 
     private void validateChatId(Long chatId) {

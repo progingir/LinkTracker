@@ -26,7 +26,7 @@ class BotControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    @DisplayName("Тест 1: Корректный запрос /updates")
+    @DisplayName("Тест 1: Корректный запрос /updates (обычное обновление)")
     void updatesCorrectRequest() throws Exception {
         var body = Map.of(
                 "id",
@@ -36,7 +36,9 @@ class BotControllerTest {
                 "description",
                 "Update detected",
                 "tgChatIds",
-                List.of(12345L));
+                List.of(12345L),
+                "isSystemReport",
+                false);
 
         mockMvc.perform(post("/updates")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -45,7 +47,24 @@ class BotControllerTest {
     }
 
     @Test
-    @DisplayName("Тест 2: Некорректный запрос /updates (400 Bad Request)")
+    @DisplayName("Тест 2: Корректный запрос /updates (системный отчет)")
+    void systemReportRequest() throws Exception {
+        var body = Map.of(
+                "description",
+                "System error report: resources unavailable",
+                "tgChatIds",
+                List.of(12345L),
+                "isSystemReport",
+                true);
+
+        mockMvc.perform(post("/updates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Тест 3: Некорректный запрос /updates (400 Bad Request)")
     void updatesIncorrectRequest() throws Exception {
         var invalidBody = Map.of("id", 1);
 
