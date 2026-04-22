@@ -61,7 +61,7 @@ public class LinkUpdateManager {
                     return Optional.of(OffsetDateTime.now());
                 }
 
-                List<UpdateResult> results = resultsOpt.get();
+                List<UpdateResult> results = resultsOpt.orElseThrow();
                 if (results.isEmpty()) {
                     return Optional.empty();
                 }
