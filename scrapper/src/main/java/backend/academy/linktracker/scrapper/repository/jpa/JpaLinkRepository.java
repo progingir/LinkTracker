@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -86,5 +87,14 @@ public class JpaLinkRepository implements LinkRepository {
     @Override
     public void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck) {
         jpaRepository.updateLastCheckAtBatch(ids, lastCheck);
+    }
+
+    @Override
+    public void updateLastUpdateTimesBatch(Map<Long, OffsetDateTime> updates) {
+        if (updates == null || updates.isEmpty()) {
+            return;
+        }
+
+        updates.forEach(jpaRepository::updateLastUpdateTime);
     }
 }

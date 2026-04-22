@@ -1,4 +1,4 @@
-package backend.academy.linktracker.scrapper.service;
+package backend.academy.linktracker.scrapper.service.update;
 
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 

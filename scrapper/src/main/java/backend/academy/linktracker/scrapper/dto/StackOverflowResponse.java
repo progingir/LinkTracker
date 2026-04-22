@@ -1,12 +1,12 @@
 package backend.academy.linktracker.scrapper.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.time.OffsetDateTime;
 import java.util.List;
 
 public record StackOverflowResponse(List<Item> items) {
-    public record Item(
-            @JsonProperty("question_id") Long questionId,
-            @JsonProperty("last_activity_date") OffsetDateTime lastActivityDate,
-            String title) {}
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public record Item(Long questionId, OffsetDateTime lastActivityDate, String title) {}
 }

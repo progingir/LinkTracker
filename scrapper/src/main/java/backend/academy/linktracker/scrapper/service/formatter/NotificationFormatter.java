@@ -1,4 +1,4 @@
-package backend.academy.linktracker.scrapper.service;
+package backend.academy.linktracker.scrapper.service.formatter;
 
 import backend.academy.linktracker.scrapper.dto.UpdateResult;
 import java.util.List;

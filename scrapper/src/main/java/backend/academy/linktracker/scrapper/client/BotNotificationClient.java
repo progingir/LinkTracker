@@ -4,7 +4,7 @@ import backend.academy.linktracker.grpc.BotServiceGrpc;
 import backend.academy.linktracker.grpc.LinkUpdateMsg;
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.properties.BotClientProperties;
-import backend.academy.linktracker.scrapper.service.UpdateSender;
+import backend.academy.linktracker.scrapper.service.update.UpdateSender;
 import io.grpc.StatusRuntimeException;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;

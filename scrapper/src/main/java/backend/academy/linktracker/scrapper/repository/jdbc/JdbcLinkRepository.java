@@ -7,8 +7,10 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
@@ -29,6 +31,7 @@ public class JdbcLinkRepository implements LinkRepository {
             rs.getInt("error_count"));
 
     private final JdbcClient jdbcClient;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public Link save(URI url) {
@@ -91,6 +94,21 @@ public class JdbcLinkRepository implements LinkRepository {
                 .param("lastUpdate", lastUpdate)
                 .param("id", linkId)
                 .update();
+    }
+
+    @Override
+    public void updateLastUpdateTimesBatch(Map<Long, OffsetDateTime> updates) {
+        if (updates.isEmpty()) {
+            return;
+        }
+
+        String sql = "UPDATE link SET last_update = ? WHERE id = ?";
+
+        List<Object[]> batchArgs = updates.entrySet().stream()
+                .map(entry -> new Object[] {entry.getValue(), entry.getKey()})
+                .toList();
+
+        jdbcTemplate.batchUpdate(sql, batchArgs);
     }
 
     @Override

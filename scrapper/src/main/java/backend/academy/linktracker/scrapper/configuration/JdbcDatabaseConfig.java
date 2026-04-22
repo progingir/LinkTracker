@@ -11,6 +11,7 @@ import backend.academy.linktracker.scrapper.repository.jdbc.JdbcTgChatRepository
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 @Configuration
@@ -18,8 +19,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 public class JdbcDatabaseConfig {
 
     @Bean
-    public LinkRepository linkRepository(JdbcClient jdbcClient) {
-        return new JdbcLinkRepository(jdbcClient);
+    public LinkRepository linkRepository(JdbcClient jdbcClient, JdbcTemplate jdbcTemplate) {
+        return new JdbcLinkRepository(jdbcClient, jdbcTemplate);
     }
 
     @Bean

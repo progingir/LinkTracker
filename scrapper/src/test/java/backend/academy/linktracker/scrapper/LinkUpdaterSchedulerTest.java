@@ -10,13 +10,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.scrapper.domain.Link;
+import backend.academy.linktracker.scrapper.dto.LinkProcessingResult;
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
+import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
 import backend.academy.linktracker.scrapper.scheduler.LinkUpdaterScheduler;
 import backend.academy.linktracker.scrapper.service.LinkService;
-import backend.academy.linktracker.scrapper.service.LinkUpdateManager;
-import backend.academy.linktracker.scrapper.service.NotificationFormatter;
 import backend.academy.linktracker.scrapper.service.SubscriptionService;
-import backend.academy.linktracker.scrapper.service.UpdateSender;
+import backend.academy.linktracker.scrapper.service.formatter.NotificationFormatter;
+import backend.academy.linktracker.scrapper.service.update.LinkUpdateManager;
+import backend.academy.linktracker.scrapper.service.update.UpdateSender;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -29,7 +31,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class LinkUpdaterSchedulerTest {
@@ -54,15 +55,25 @@ class LinkUpdaterSchedulerTest {
     @Mock
     private Executor executor;
 
+    @Mock
+    private SchedulerProperties schedulerProperties;
+
     private LinkUpdaterScheduler scheduler;
 
     @BeforeEach
     void setUp() {
         scheduler = new LinkUpdaterScheduler(
-                linkService, subscriptionService, updateManager, formatter, updateSender, executor);
+                linkService,
+                subscriptionService,
+                updateManager,
+                formatter,
+                updateSender,
+                executor,
+                schedulerProperties);
 
-        ReflectionTestUtils.setField(scheduler, "batchSize", BATCH_SIZE);
-        ReflectionTestUtils.setField(scheduler, "threadsCount", 1);
+        lenient().when(schedulerProperties.batchSize()).thenReturn(BATCH_SIZE);
+        lenient().when(schedulerProperties.threadsCount()).thenReturn(1);
+        lenient().when(schedulerProperties.maxLinksPerRun()).thenReturn(BATCH_SIZE);
 
         lenient()
                 .doAnswer(invocation -> {
@@ -79,13 +90,14 @@ class LinkUpdaterSchedulerTest {
         Link link1 = new Link(1L, URI.create("https://link1.com"), OffsetDateTime.now(), OffsetDateTime.now(), 0);
         Link link2 = new Link(2L, URI.create("https://link2.com"), OffsetDateTime.now(), OffsetDateTime.now(), 0);
 
-        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(link1, link2));
-        when(updateManager.processLinkUpdate(any())).thenReturn(Optional.empty());
+        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(link1, link2), List.of());
+        when(updateManager.processLinkUpdate(any()))
+                .thenReturn(new LinkProcessingResult(Optional.empty(), Optional.empty()));
 
         scheduler.update();
 
         verify(updateManager, times(2)).processLinkUpdate(any());
-        verify(linkService).updateLastCheckTimeBatch(any(), any());
+        verify(linkService, atLeastOnce()).updateLastCheckTimeBatch(any(), any());
     }
 
     @Test
@@ -94,16 +106,17 @@ class LinkUpdaterSchedulerTest {
         Link brokenLink = new Link(1L, URI.create("https://broken.com"), OffsetDateTime.now(), OffsetDateTime.now(), 0);
         Link normalLink = new Link(2L, URI.create("https://normal.com"), OffsetDateTime.now(), OffsetDateTime.now(), 0);
 
-        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(brokenLink, normalLink));
+        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(brokenLink, normalLink), List.of());
 
         when(updateManager.processLinkUpdate(brokenLink)).thenThrow(new RuntimeException("API CRASH"));
-        when(updateManager.processLinkUpdate(normalLink)).thenReturn(Optional.empty());
+        when(updateManager.processLinkUpdate(normalLink))
+                .thenReturn(new LinkProcessingResult(Optional.empty(), Optional.empty()));
 
         scheduler.update();
 
         verify(updateManager).processLinkUpdate(brokenLink);
         verify(updateManager).processLinkUpdate(normalLink);
-        verify(linkService).updateLastCheckTimeBatch(any(), any());
+        verify(linkService, atLeastOnce()).updateLastCheckTimeBatch(any(), any());
     }
 
     @Test
@@ -112,15 +125,16 @@ class LinkUpdaterSchedulerTest {
         URI badUrl = URI.create("https://bad.com");
         Link link = new Link(1L, badUrl, OffsetDateTime.now(), OffsetDateTime.now(), 4);
 
-        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(link));
-        when(updateManager.processLinkUpdate(link)).thenReturn(Optional.of(badUrl.toString()));
+        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(link), List.of());
+        when(updateManager.processLinkUpdate(link))
+                .thenReturn(new LinkProcessingResult(Optional.of(badUrl.toString()), Optional.empty()));
         when(subscriptionService.getChatIdsByLinkId(1L)).thenReturn(List.of(100L));
         when(formatter.formatErrorReport(any())).thenReturn("Aggregated Error Message");
 
         scheduler.update();
 
         ArgumentCaptor<LinkUpdate> captor = ArgumentCaptor.forClass(LinkUpdate.class);
-        verify(updateSender).sendUpdate(captor.capture());
+        verify(updateSender, times(1)).sendUpdate(captor.capture());
 
         LinkUpdate report = captor.getValue();
         assertThat(report.isSystemReport()).isTrue();
@@ -143,8 +157,9 @@ class LinkUpdaterSchedulerTest {
     void shouldNotSendReportIfThresholdNotReached() {
         Link link = new Link(1L, URI.create("https://maybe-bad.com"), OffsetDateTime.now(), OffsetDateTime.now(), 1);
 
-        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(link));
-        when(updateManager.processLinkUpdate(link)).thenReturn(Optional.empty());
+        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(link), List.of());
+        when(updateManager.processLinkUpdate(link))
+                .thenReturn(new LinkProcessingResult(Optional.empty(), Optional.empty()));
 
         scheduler.update();
 

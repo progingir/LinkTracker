@@ -14,6 +14,7 @@ import backend.academy.linktracker.scrapper.repository.TgChatRepository;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -148,5 +149,13 @@ public class LinkService {
 
     private LinkResponse mapToResponse(Subscription subscription) {
         return new LinkResponse(subscription.linkId(), subscription.url(), subscription.tags());
+    }
+
+    @Transactional
+    public void updateLastUpdateTimesBatch(Map<Long, OffsetDateTime> updates) {
+        if (updates == null || updates.isEmpty()) {
+            return;
+        }
+        linkRepository.updateLastUpdateTimesBatch(updates);
     }
 }
