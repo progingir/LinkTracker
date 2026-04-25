@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,7 @@ public class JpaLinkRepository implements LinkRepository {
         entity.setUrl(url.toString());
         entity.setLastUpdate(OffsetDateTime.now());
         entity.setLastCheckAt(NEVER_CHECKED);
+        entity.setErrorCount(0);
 
         entity = jpaRepository.saveAndFlush(entity);
 
@@ -63,12 +65,36 @@ public class JpaLinkRepository implements LinkRepository {
         jpaRepository.updateLastUpdateTime(linkId, lastUpdate);
     }
 
+    @Override
+    public void incrementErrorCount(Long linkId) {
+        jpaRepository.incrementErrorCount(linkId);
+    }
+
+    @Override
+    public void resetErrorCount(Long linkId) {
+        jpaRepository.resetErrorCount(linkId);
+    }
+
     private Link mapToDomain(LinkEntity entity) {
-        return new Link(entity.getId(), URI.create(entity.getUrl()), entity.getLastUpdate(), entity.getLastCheckAt());
+        return new Link(
+                entity.getId(),
+                URI.create(entity.getUrl()),
+                entity.getLastUpdate(),
+                entity.getLastCheckAt(),
+                entity.getErrorCount());
     }
 
     @Override
     public void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck) {
         jpaRepository.updateLastCheckAtBatch(ids, lastCheck);
+    }
+
+    @Override
+    public void updateLastUpdateTimesBatch(Map<Long, OffsetDateTime> updates) {
+        if (updates == null || updates.isEmpty()) {
+            return;
+        }
+
+        updates.forEach(jpaRepository::updateLastUpdateTime);
     }
 }

@@ -12,7 +12,9 @@ import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.TgChatRepository;
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -95,6 +97,31 @@ public class LinkService {
         return new LinkResponse(link.id(), link.url(), List.of());
     }
 
+    @Transactional(readOnly = true)
+    public List<Link> findOldest(int limit) {
+        return linkRepository.findOldest(limit);
+    }
+
+    @Transactional
+    public void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck) {
+        linkRepository.updateLastCheckTimeBatch(ids, lastCheck);
+    }
+
+    @Transactional
+    public void updateLastUpdateTime(Long linkId, OffsetDateTime lastUpdate) {
+        linkRepository.updateLastUpdateTime(linkId, lastUpdate);
+    }
+
+    @Transactional
+    public void incrementErrorCount(Long linkId) {
+        linkRepository.incrementErrorCount(linkId);
+    }
+
+    @Transactional
+    public void resetErrorCount(Long linkId) {
+        linkRepository.resetErrorCount(linkId);
+    }
+
     private void validateChatId(Long chatId) {
         if (chatId == null || chatId <= 0) {
             throw new IllegalArgumentException("ID чата должен быть положительным");
@@ -122,5 +149,13 @@ public class LinkService {
 
     private LinkResponse mapToResponse(Subscription subscription) {
         return new LinkResponse(subscription.linkId(), subscription.url(), subscription.tags());
+    }
+
+    @Transactional
+    public void updateLastUpdateTimesBatch(Map<Long, OffsetDateTime> updates) {
+        if (updates == null || updates.isEmpty()) {
+            return;
+        }
+        linkRepository.updateLastUpdateTimesBatch(updates);
     }
 }

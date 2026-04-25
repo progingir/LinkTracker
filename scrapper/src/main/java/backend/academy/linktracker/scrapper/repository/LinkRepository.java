@@ -4,6 +4,7 @@ import backend.academy.linktracker.scrapper.domain.Link;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface LinkRepository {
@@ -19,7 +20,13 @@ public interface LinkRepository {
 
     void updateLastCheckTime(Long linkId, OffsetDateTime lastCheck);
 
+    void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck);
+
     void updateLastUpdateTime(Long linkId, OffsetDateTime lastUpdate);
 
-    void updateLastCheckTimeBatch(List<Long> ids, OffsetDateTime lastCheck);
+    void incrementErrorCount(Long linkId);
+
+    void resetErrorCount(Long linkId);
+
+    void updateLastUpdateTimesBatch(Map<Long, OffsetDateTime> updates);
 }

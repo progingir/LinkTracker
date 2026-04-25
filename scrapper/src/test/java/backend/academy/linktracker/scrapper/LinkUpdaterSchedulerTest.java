@@ -1,113 +1,169 @@
 package backend.academy.linktracker.scrapper;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import backend.academy.linktracker.scrapper.client.BotNotificationClient;
 import backend.academy.linktracker.scrapper.domain.Link;
-import backend.academy.linktracker.scrapper.repository.LinkRepository;
-import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
+import backend.academy.linktracker.scrapper.dto.LinkProcessingResult;
+import backend.academy.linktracker.scrapper.dto.LinkUpdate;
+import backend.academy.linktracker.scrapper.properties.SchedulerProperties;
 import backend.academy.linktracker.scrapper.scheduler.LinkUpdaterScheduler;
-import backend.academy.linktracker.scrapper.service.LinkUpdateService;
+import backend.academy.linktracker.scrapper.service.LinkService;
+import backend.academy.linktracker.scrapper.service.SubscriptionService;
+import backend.academy.linktracker.scrapper.service.formatter.NotificationFormatter;
+import backend.academy.linktracker.scrapper.service.update.LinkUpdateManager;
+import backend.academy.linktracker.scrapper.service.update.UpdateSender;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@SpringBootTest
-@TestPropertySource(properties = "app.database.access-type=jdbc")
-@Import(TestcontainersConfiguration.class)
+@ExtendWith(MockitoExtension.class)
 class LinkUpdaterSchedulerTest {
 
-    @Autowired
+    private static final int BATCH_SIZE = 10;
+
+    @Mock
+    private LinkService linkService;
+
+    @Mock
+    private SubscriptionService subscriptionService;
+
+    @Mock
+    private LinkUpdateManager updateManager;
+
+    @Mock
+    private NotificationFormatter formatter;
+
+    @Mock
+    private UpdateSender updateSender;
+
+    @Mock
+    private Executor executor;
+
+    @Mock
+    private SchedulerProperties schedulerProperties;
+
     private LinkUpdaterScheduler scheduler;
 
-    @MockitoBean
-    private LinkRepository linkRepository;
+    @BeforeEach
+    void setUp() {
+        scheduler = new LinkUpdaterScheduler(
+                linkService,
+                subscriptionService,
+                updateManager,
+                formatter,
+                updateSender,
+                executor,
+                schedulerProperties);
 
-    @MockitoBean
-    private SubscriptionRepository subscriptionRepository;
+        lenient().when(schedulerProperties.batchSize()).thenReturn(BATCH_SIZE);
+        lenient().when(schedulerProperties.threadsCount()).thenReturn(1);
+        lenient().when(schedulerProperties.maxLinksPerRun()).thenReturn(BATCH_SIZE);
 
-    @MockitoBean
-    private BotNotificationClient botClient;
-
-    @MockitoBean(name = "gitHubLinkUpdateService")
-    private LinkUpdateService githubUpdateService;
-
-    @Test
-    @DisplayName("Сценарий 7: Уведомление приходит подписчикам конкретной ссылки, у которых устарели данные")
-    void shouldNotifyOnlySubscribedUsersWithOutdatedLinks() {
-        URI githubUrl = URI.create("https://github.com/user/repo");
-        OffsetDateTime now = OffsetDateTime.now();
-        OffsetDateTime externalUpdate = now.minusHours(5);
-
-        Link githubLink = new Link(1L, githubUrl, now.minusDays(1), now.minusMinutes(30));
-
-        when(linkRepository.findOldest(anyInt())).thenReturn(List.of(githubLink));
-
-        when(subscriptionRepository.findChatIdsByLinkId(1L)).thenReturn(List.of(100L));
-
-        when(githubUpdateService.supports(githubUrl)).thenReturn(true);
-        when(githubUpdateService.fetchUpdateDate(githubUrl)).thenReturn(Optional.of(externalUpdate));
-        when(githubUpdateService.getUpdateDescription(githubUrl, externalUpdate))
-                .thenReturn("GitHub update!");
-
-        scheduler.update();
-
-        verify(botClient, times(1))
-                .sendUpdate(argThat(update -> update.url().equals(githubUrl)
-                        && update.tgChatIds().contains(100L)
-                        && update.tgChatIds().size() == 1));
+        lenient()
+                .doAnswer(invocation -> {
+                    ((Runnable) invocation.getArgument(0)).run();
+                    return null;
+                })
+                .when(executor)
+                .execute(any(Runnable.class));
     }
 
     @Test
-    @DisplayName("Сценарий 8: Обработка пустого ответа")
-    void handleEmptyResponse() {
-        URI url = URI.create("https://github.com/user/repo");
-        OffsetDateTime now = OffsetDateTime.now();
+    @DisplayName("Тест 1: Успешная обработка. Должен вызвать менеджер для каждой ссылки")
+    void shouldInvokeManagerForEachLink() {
+        Link link1 = new Link(1L, URI.create("https://link1.com"), OffsetDateTime.now(), OffsetDateTime.now(), 0);
+        Link link2 = new Link(2L, URI.create("https://link2.com"), OffsetDateTime.now(), OffsetDateTime.now(), 0);
 
-        Link link = new Link(1L, url, now.minusDays(1), now);
-
-        when(linkRepository.findOldest(anyInt())).thenReturn(List.of(link));
-
-        when(githubUpdateService.supports(url)).thenReturn(true);
-        when(githubUpdateService.fetchUpdateDate(url)).thenReturn(Optional.empty());
+        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(link1, link2), List.of());
+        when(updateManager.processLinkUpdate(any()))
+                .thenReturn(new LinkProcessingResult(Optional.empty(), Optional.empty()));
 
         scheduler.update();
 
-        verifyNoInteractions(botClient);
+        verify(updateManager, times(2)).processLinkUpdate(any());
+        verify(linkService, atLeastOnce()).updateLastCheckTimeBatch(any(), any());
     }
 
     @Test
-    @DisplayName("Сценарий 9: Обработка критической ошибки API")
-    void handleApiError() {
-        URI url = URI.create("https://github.com/user/repo");
-        OffsetDateTime now = OffsetDateTime.now();
+    @DisplayName("Тест 2: Изоляция ошибок. Если одна ссылка упала с Exception, вторая должна обработаться")
+    void shouldContinueProcessingIfOneLinkThrowsException() {
+        Link brokenLink = new Link(1L, URI.create("https://broken.com"), OffsetDateTime.now(), OffsetDateTime.now(), 0);
+        Link normalLink = new Link(2L, URI.create("https://normal.com"), OffsetDateTime.now(), OffsetDateTime.now(), 0);
 
-        Link link = new Link(1L, url, now, now);
+        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(brokenLink, normalLink), List.of());
 
-        when(linkRepository.findOldest(anyInt())).thenReturn(List.of(link));
-
-        when(githubUpdateService.supports(url)).thenReturn(true);
-        when(githubUpdateService.fetchUpdateDate(url)).thenThrow(new RuntimeException("API Down"));
+        when(updateManager.processLinkUpdate(brokenLink)).thenThrow(new RuntimeException("API CRASH"));
+        when(updateManager.processLinkUpdate(normalLink))
+                .thenReturn(new LinkProcessingResult(Optional.empty(), Optional.empty()));
 
         scheduler.update();
 
-        verifyNoInteractions(botClient);
-        verify(linkRepository, never()).updateLastUpdateTime(anyLong(), any());
+        verify(updateManager).processLinkUpdate(brokenLink);
+        verify(updateManager).processLinkUpdate(normalLink);
+        verify(linkService, atLeastOnce()).updateLastCheckTimeBatch(any(), any());
+    }
+
+    @Test
+    @DisplayName("Тест 3: Сбор отчета. Если менеджер вернул URL (порог достигнут), должен уйти системный отчет")
+    void shouldCollectFailedLinksAndSendSystemReport() {
+        URI badUrl = URI.create("https://bad.com");
+        Link link = new Link(1L, badUrl, OffsetDateTime.now(), OffsetDateTime.now(), 4);
+
+        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(link), List.of());
+        when(updateManager.processLinkUpdate(link))
+                .thenReturn(new LinkProcessingResult(Optional.of(badUrl.toString()), Optional.empty()));
+        when(subscriptionService.getChatIdsByLinkId(1L)).thenReturn(List.of(100L));
+        when(formatter.formatErrorReport(any())).thenReturn("Aggregated Error Message");
+
+        scheduler.update();
+
+        ArgumentCaptor<LinkUpdate> captor = ArgumentCaptor.forClass(LinkUpdate.class);
+        verify(updateSender, times(1)).sendUpdate(captor.capture());
+
+        LinkUpdate report = captor.getValue();
+        assertThat(report.isSystemReport()).isTrue();
+        assertThat(report.description()).isEqualTo("Aggregated Error Message");
+    }
+
+    @Test
+    @DisplayName("Тест 4: Отсутствие обновлений. Если база пуста, ничего не делать")
+    void shouldDoNothingIfNoLinksFound() {
+        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of());
+
+        scheduler.update();
+
+        verify(updateManager, never()).processLinkUpdate(any());
+        verify(updateSender, never()).sendUpdate(any());
+    }
+
+    @Test
+    @DisplayName("Тест 5: Порог не достигнут. Если менеджер вернул Empty, отчет не шлется")
+    void shouldNotSendReportIfThresholdNotReached() {
+        Link link = new Link(1L, URI.create("https://maybe-bad.com"), OffsetDateTime.now(), OffsetDateTime.now(), 1);
+
+        when(linkService.findOldest(BATCH_SIZE)).thenReturn(List.of(link), List.of());
+        when(updateManager.processLinkUpdate(link))
+                .thenReturn(new LinkProcessingResult(Optional.empty(), Optional.empty()));
+
+        scheduler.update();
+
+        verify(updateSender, never()).sendUpdate(any());
+        verify(linkService, atLeastOnce()).updateLastCheckTimeBatch(any(), any());
     }
 }

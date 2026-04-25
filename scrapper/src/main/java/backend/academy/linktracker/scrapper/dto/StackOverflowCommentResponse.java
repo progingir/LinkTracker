@@ -5,8 +5,11 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-public record StackOverflowResponse(List<Item> items) {
+public record StackOverflowCommentResponse(List<Comment> items) {
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public record Item(Long questionId, OffsetDateTime lastActivityDate, String title) {}
+    public record Comment(Long commentId, String body, Owner owner, OffsetDateTime creationDate) {}
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public record Owner(String displayName) {}
 }

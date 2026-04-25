@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot.service;
 
 import backend.academy.linktracker.bot.command.Command;
+import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.bot.handler.StateHandler;
 import backend.academy.linktracker.bot.state.UserState;
 import com.pengrad.telegrambot.UpdatesListener;
@@ -58,17 +59,17 @@ public class BotService implements UpdatesListener {
         return CONFIRMED_UPDATES_ALL;
     }
 
-    public void sendNotification(backend.academy.linktracker.bot.dto.LinkUpdate update) {
-        String messageText = "🔔 Обновление по ссылке: " + update.url() + "\n" + update.description();
+    public void sendNotification(LinkUpdate update) {
+        String messageText = update.isSystemReport()
+                ? update.description()
+                : "🔔 *Обновление по ссылке:* " + update.url() + "\n\n" + update.description();
 
         for (Long chatId : update.tgChatIds()) {
             try {
-                messageSender.sendMessage(new SendMessage(chatId.longValue(), messageText), chatId);
+                SendMessage message = new SendMessage(chatId, messageText);
+                messageSender.sendMessage(message, chatId);
             } catch (Exception e) {
-                log.atError()
-                        .setCause(e)
-                        .addKeyValue("chat_id", chatId)
-                        .log("Не удалось отправить уведомление об обновлении");
+                log.atError().setCause(e).addKeyValue("chat_id", chatId).log("Не удалось отправить уведомление");
             }
         }
     }

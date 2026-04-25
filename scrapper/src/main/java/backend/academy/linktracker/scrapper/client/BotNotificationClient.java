@@ -4,6 +4,7 @@ import backend.academy.linktracker.grpc.BotServiceGrpc;
 import backend.academy.linktracker.grpc.LinkUpdateMsg;
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.properties.BotClientProperties;
+import backend.academy.linktracker.scrapper.service.update.UpdateSender;
 import io.grpc.StatusRuntimeException;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class BotNotificationClient {
+public class BotNotificationClient implements UpdateSender {
 
     private final BotServiceGrpc.BotServiceBlockingStub botServiceStub;
 

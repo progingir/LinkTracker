@@ -41,5 +41,8 @@ app:
   scheduler:
     interval: 30s
     batch-size: 50
+    threads-count: 4
+    error-threshold: 5
+    max-links-per-run: 1000
   database:
     access-type: jdbc
