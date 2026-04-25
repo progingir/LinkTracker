@@ -24,4 +24,7 @@ public class LinkEntity {
 
     @Column(name = "last_check_at")
     private OffsetDateTime lastCheckAt;
+
+    @Column(name = "error_count", nullable = false)
+    private int errorCount = 0;
 }

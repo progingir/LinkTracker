@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 public class BotGrpcMapper {
 
     public LinkUpdate toDto(LinkUpdateMsg msg) {
-        return new LinkUpdate(msg.getId(), URI.create(msg.getUrl()), msg.getDescription(), msg.getTgChatIdsList());
+        return new LinkUpdate(
+                msg.getId(), URI.create(msg.getUrl()), msg.getDescription(), msg.getTgChatIdsList(), false);
     }
 }

@@ -5,4 +5,13 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.time.OffsetDateTime;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public record GitHubResponse(String name, OffsetDateTime updatedAt, OffsetDateTime pushedAt) {}
+public record GitHubIssueResponse(
+        Long id,
+        String title,
+        String body,
+        OffsetDateTime createdAt,
+        OffsetDateTime updatedAt,
+        User user,
+        Object pullRequest) {
+    public record User(String login) {}
+}
