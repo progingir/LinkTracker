@@ -4,6 +4,7 @@ server:
 spring:
   application:
     name: bot
+
   grpc:
     server:
       port: 9090
@@ -12,17 +13,38 @@ spring:
         address: static://${APP_SCRAPPER_HOST:localhost}:9091
         negotiation-type: plaintext
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9094,localhost:9096}
+    consumer:
+      group-id: "bot-notification-group"
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      auto-offset-reset: earliest
+    properties:
+      spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+      spring.json.trusted.packages: "*"
+      spring.json.use.type.headers: false
+      spring.json.value.default.type: backend.academy.linktracker.bot.dto.LinkUpdate
+
 app:
+  kafka:
+    topic: "link_updates"
+    retry:
+      max-attempts: 3
+
   telegram:
     url: https://api.telegram.org/bot
-    token: ${TELEGRAM_TOKEN} # Use env variable. DO NOT KEEP TOKEN HERE
+    token: ${TELEGRAM_TOKEN}
     update-listener-sleep: 1s
     debug: false
+
   scrapper-client:
     base-url: http://localhost:8081
     grpc-channel-name: scrapper-channel
+
   grpc:
     scrapper-deadline: 5s
+
   scrapper-client-type: grpc
 
 logging:

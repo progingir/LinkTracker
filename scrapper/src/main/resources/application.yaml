@@ -4,6 +4,7 @@ server:
 spring:
   application:
     name: scrapper
+
   grpc:
     server:
       port: 9091
@@ -11,14 +12,17 @@ spring:
       default-channel:
         address: static://${APP_BOT_HOST:localhost}:9090
         negotiation-type: plaintext
+
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:scrapper}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:12345}
     driver-class-name: org.postgresql.Driver
+
   liquibase:
     enabled: true
     change-log: migrations/master.xml
+
   jpa:
     hibernate:
       ddl-auto: none
@@ -27,22 +31,40 @@ spring:
       hibernate:
         format_sql: true
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9094,localhost:9096}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 10
+
 app:
+  use-queue: ${USE_QUEUE:true}
+
+  kafka:
+    topic: "link_updates"
+    outbox-check-interval: 5s
+
   bot-client:
     base-url: "http://localhost:8080"
     grpc-channel-name: "bot-channel"
+
   stackoverflow:
     url: https://api.stackexchange.com/2.3
     key: ${STACKOVERFLOW_KEY}
     access-token: ${STACKOVERFLOW_ACCESS_KEY}
+
   github:
     url: https://api.github.com
     token: ${GITHUB_TOKEN}
+
   scheduler:
     interval: 30s
     batch-size: 50
     threads-count: 4
     error-threshold: 5
     max-links-per-run: 1000
+
   database:
     access-type: jdbc

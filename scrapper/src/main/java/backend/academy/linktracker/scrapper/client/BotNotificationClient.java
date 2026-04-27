@@ -9,17 +9,20 @@ import io.grpc.StatusRuntimeException;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.use-queue", havingValue = "false")
 public class BotNotificationClient implements UpdateSender {
 
     private final BotServiceGrpc.BotServiceBlockingStub botServiceStub;
 
     private final BotClientProperties properties;
 
+    @Override
     public void sendUpdate(LinkUpdate update) {
         try {
             botServiceStub
