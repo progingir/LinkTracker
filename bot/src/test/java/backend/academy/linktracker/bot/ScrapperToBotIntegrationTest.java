@@ -25,7 +25,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-@SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
+@SpringBootTest(properties = {
+    "spring.main.allow-bean-definition-overriding=true",
+    "spring.kafka.admin.auto-create=false",
+    "spring.kafka.bootstrap-servers=localhost:9999",
+    "logging.level.org.apache.kafka=ERROR"
+})
 @Testcontainers
 public class ScrapperToBotIntegrationTest {
 
