@@ -5,6 +5,9 @@ spring:
   application:
     name: bot
 
+  main:
+    allow-bean-definition-overriding: true
+
   grpc:
     server:
       port: 9090
@@ -15,16 +18,22 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9094,localhost:9096}
+
+    admin:
+      auto-create: false
+      properties:
+        retry.backoff.ms: 1000
+
     consumer:
       group-id: "bot-notification-group"
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       auto-offset-reset: earliest
-    properties:
-      spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-      spring.json.trusted.packages: "*"
-      spring.json.use.type.headers: false
-      spring.json.value.default.type: backend.academy.linktracker.bot.dto.LinkUpdate
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: backend.academy.linktracker.bot.dto.LinkUpdate
 
 app:
   kafka:
