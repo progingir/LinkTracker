@@ -24,9 +24,9 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     public PostgreSQLContainer<?> postgresContainer() {
         PostgreSQLContainer<?> container = new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"))
-            .withDatabaseName("scrapper-test-db")
-            .withUsername("postgres")
-            .withPassword("12345");
+                .withDatabaseName("scrapper-test-db")
+                .withUsername("postgres")
+                .withPassword("12345");
 
         container.start();
 
@@ -45,14 +45,14 @@ public class TestcontainersConfiguration {
         try {
             Connection connection = DriverManager.getConnection(c.getJdbcUrl(), c.getUsername(), c.getPassword());
             Database database =
-                DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
+                    DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
 
             File migrationsDir = new File(".").getAbsolutePath().contains("scrapper")
-                ? new File("../migrations")
-                : new File("migrations");
+                    ? new File("../migrations")
+                    : new File("migrations");
 
             Liquibase liquibase = new Liquibase(
-                "master.xml", new DirectoryResourceAccessor(migrationsDir.getAbsoluteFile()), database);
+                    "master.xml", new DirectoryResourceAccessor(migrationsDir.getAbsoluteFile()), database);
 
             liquibase.update(new Contexts(), new LabelExpression());
 

@@ -21,13 +21,13 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(
-    properties = {
-        "spring.main.allow-bean-definition-overriding=true",
-        "spring.kafka.admin.auto-create=false",
-        "logging.level.org.apache.kafka=ERROR",
-        "app.kafka.topic=link_updates",
-        "spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer"
-    })
+        properties = {
+            "spring.main.allow-bean-definition-overriding=true",
+            "spring.kafka.admin.auto-create=false",
+            "logging.level.org.apache.kafka=ERROR",
+            "app.kafka.topic=link_updates",
+            "spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer"
+        })
 @Import(TestcontainersConfiguration.class)
 public class ScrapperToBotIntegrationTest {
 
@@ -50,7 +50,7 @@ public class ScrapperToBotIntegrationTest {
     @Test
     void shouldProcessMessageFromKafkaAndSendToTelegram() {
         LinkUpdate update = new LinkUpdate(
-            100L, URI.create("https://github.com/user/repo"), "Update detected", List.of(12345L), false);
+                100L, URI.create("https://github.com/user/repo"), "Update detected", List.of(12345L), false);
 
         kafkaTemplate.send("link_updates", update.id().toString(), update);
 
