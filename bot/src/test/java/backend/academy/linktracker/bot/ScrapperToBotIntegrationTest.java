@@ -1,59 +1,46 @@
 package backend.academy.linktracker.bot;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.when;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 import backend.academy.linktracker.bot.dto.LinkUpdate;
-import backend.academy.linktracker.bot.service.BotStarter;
-import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.request.SendMessage;
-import com.pengrad.telegrambot.response.BaseResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-@SpringBootTest(
-        properties = {
-            "spring.main.allow-bean-definition-overriding=true",
-            "spring.kafka.admin.auto-create=false",
-            "logging.level.org.apache.kafka=ERROR",
-            "app.kafka.topic=link_updates",
-            "spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JsonSerializer"
-        })
-@Import(TestcontainersConfiguration.class)
-public class ScrapperToBotIntegrationTest {
+public class ScrapperToBotIntegrationTest extends BotIntegrationTestBase {
 
     @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
-    @MockitoBean
-    private TelegramBot telegramBot;
-
-    @MockitoBean
-    private BotStarter botStarter;
-
-    @BeforeEach
-    void setUp() {
-        BaseResponse successResponse = Mockito.mock(BaseResponse.class);
-        when(successResponse.isOk()).thenReturn(true);
-        when(telegramBot.execute(any())).thenReturn(successResponse);
-    }
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void shouldProcessMessageFromKafkaAndSendToTelegram() {
+    @DisplayName("Проверка всей цепочки: Kafka -> Обработка -> HTTP-запрос в Telegram")
+    void shouldProcessMessageFromKafkaAndSendToTelegram() throws Exception {
+        stubFor(post(urlPathMatching("/bot[^/]+/sendMessage"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"ok\": true}")));
+
+        Long chatId = 12345L;
         LinkUpdate update = new LinkUpdate(
-                100L, URI.create("https://github.com/user/repo"), "Update detected", List.of(12345L), false);
+                100L, URI.create("https://github.com/user/repo"), "Обновление обнаружено", List.of(chatId), false);
 
-        kafkaTemplate.send("link_updates", update.id().toString(), update);
+        String updateJson = objectMapper.writeValueAsString(update);
 
-        Mockito.verify(telegramBot, timeout(15000).atLeastOnce()).execute(any(SendMessage.class));
+        kafkaTemplate.send("link_updates", update.id().toString(), updateJson);
+
+        Thread.sleep(3000);
+
+        verify(
+                1,
+                postRequestedFor(urlPathMatching("/bot[^/]+/sendMessage"))
+                        .withRequestBody(containing("chat_id=" + chatId))
+                        .withRequestBody(containing("github.com")));
     }
 }
