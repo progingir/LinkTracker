@@ -25,9 +25,7 @@ public class JpaOutboxRepository implements OutboxRepository {
     @Override
     @Transactional
     public void cleanup() {
-        jpaRepository.deleteAllByStatusIn(Set.of(
-            OutboxMessageEntity.OutboxStatus.SENT,
-            OutboxMessageEntity.OutboxStatus.FAILED
-        ));
+        jpaRepository.deleteAllByStatusIn(
+                Set.of(OutboxMessageEntity.OutboxStatus.SENT, OutboxMessageEntity.OutboxStatus.FAILED));
     }
 }

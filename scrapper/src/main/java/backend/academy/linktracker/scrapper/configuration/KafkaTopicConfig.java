@@ -17,9 +17,9 @@ public class KafkaTopicConfig {
     @Bean
     public NewTopic linkUpdatesTopic() {
         return TopicBuilder.name(kafkaProperties.topic())
-            .partitions(kafkaProperties.partitions())
-            .replicas(kafkaProperties.replicas())
-            .configs(Map.of("min.insync.replicas", kafkaProperties.minInsyncReplicas()))
-            .build();
+                .partitions(kafkaProperties.partitions())
+                .replicas(kafkaProperties.replicas())
+                .configs(Map.of("min.insync.replicas", kafkaProperties.minInsyncReplicas()))
+                .build();
     }
 }

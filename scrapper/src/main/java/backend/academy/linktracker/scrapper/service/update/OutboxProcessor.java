@@ -3,7 +3,6 @@ package backend.academy.linktracker.scrapper.service.update;
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.entity.OutboxMessageEntity;
 import backend.academy.linktracker.scrapper.repository.OutboxRepository;
-import backend.academy.linktracker.scrapper.repository.jpa.SpringDataJpaOutboxRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

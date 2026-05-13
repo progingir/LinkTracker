@@ -25,11 +25,11 @@ public class BotService implements UpdatesListener {
     private final NotificationInboxRepository inboxRepository;
 
     public BotService(
-        TelegramMessageSender messageSender,
-        List<Command> commands,
-        StateService stateService,
-        List<StateHandler> handlers,
-        NotificationInboxRepository inboxRepository) {
+            TelegramMessageSender messageSender,
+            List<Command> commands,
+            StateService stateService,
+            List<StateHandler> handlers,
+            NotificationInboxRepository inboxRepository) {
         this.messageSender = messageSender;
         this.commands = commands;
         this.stateService = stateService;
@@ -54,10 +54,10 @@ public class BotService implements UpdatesListener {
                 }
             } catch (Exception e) {
                 log.atError()
-                    .setCause(e)
-                    .addKeyValue("chat_id", chatId)
-                    .addKeyValue("update_id", update.updateId())
-                    .log("Критический сбой при обработке обновления из Telegram API");
+                        .setCause(e)
+                        .addKeyValue("chat_id", chatId)
+                        .addKeyValue("update_id", update.updateId())
+                        .log("Критический сбой при обработке обновления из Telegram API");
             }
         }
         return CONFIRMED_UPDATES_ALL;
@@ -65,19 +65,18 @@ public class BotService implements UpdatesListener {
 
     public void sendNotification(LinkUpdate update) {
         String messageText = update.isSystemReport()
-            ? update.description()
-            : "🔔 *Обновление по ссылке:* " + update.url() + "\n\n" + update.description();
+                ? update.description()
+                : "🔔 *Обновление по ссылке:* " + update.url() + "\n\n" + update.description();
 
-        String updateKey = update.isSystemReport()
-            ? "sys_" + update.description().hashCode()
-            : "upd_" + update.id();
+        String updateKey =
+                update.isSystemReport() ? "sys_" + update.description().hashCode() : "upd_" + update.id();
 
         for (Long chatId : update.tgChatIds()) {
             if (inboxRepository.isProcessed(updateKey, chatId)) {
                 log.atDebug()
-                    .addKeyValue("chat_id", chatId)
-                    .addKeyValue("update_key", updateKey)
-                    .log("Уведомление уже было отправлено ранее, пропускаем дубликат");
+                        .addKeyValue("chat_id", chatId)
+                        .addKeyValue("update_key", updateKey)
+                        .log("Уведомление уже было отправлено ранее, пропускаем дубликат");
                 continue;
             }
 
@@ -99,13 +98,13 @@ public class BotService implements UpdatesListener {
             stateService.clear(chatId);
 
             Command commandToExecute =
-                commands.stream().filter(c -> c.supports(text)).findFirst().orElse(null);
+                    commands.stream().filter(c -> c.supports(text)).findFirst().orElse(null);
 
             if (commandToExecute != null) {
                 log.atInfo()
-                    .addKeyValue("command", commandToExecute.commandName())
-                    .addKeyValue("chat_id", chatId)
-                    .log("Выполняю команду");
+                        .addKeyValue("command", commandToExecute.commandName())
+                        .addKeyValue("chat_id", chatId)
+                        .log("Выполняю команду");
                 return commandToExecute.handle(update);
             } else {
                 return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help.");
@@ -117,9 +116,9 @@ public class BotService implements UpdatesListener {
             return handler.handle(update, context);
         } else {
             log.atWarn()
-                .addKeyValue("chat_id", chatId)
-                .addKeyValue("text", text)
-                .log("Получен текст вне контекста диалога");
+                    .addKeyValue("chat_id", chatId)
+                    .addKeyValue("text", text)
+                    .log("Получен текст вне контекста диалога");
             return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help.");
         }
     }

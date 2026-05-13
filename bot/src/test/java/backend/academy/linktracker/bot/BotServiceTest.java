@@ -40,15 +40,9 @@ class BotServiceTest {
         inboxRepository = mock(NotificationInboxRepository.class);
 
         when(stateService.getContext(anyLong()))
-            .thenReturn(new StateRepository.UserContext(DefaultState.NONE, null, null));
+                .thenReturn(new StateRepository.UserContext(DefaultState.NONE, null, null));
 
-        botService = new BotService(
-            messageSender,
-            List.of(mockCommand),
-            stateService,
-            List.of(),
-            inboxRepository
-        );
+        botService = new BotService(messageSender, List.of(mockCommand), stateService, List.of(), inboxRepository);
     }
 
     @Test
@@ -75,13 +69,13 @@ class BotServiceTest {
         botService.process(List.of(update));
 
         verify(messageSender)
-            .sendMessage(
-                argThat(request -> request != null
-                    && request.getParameters()
-                    .get("text")
-                    .toString()
-                    .contains("Неизвестная команда")),
-                anyLong());
+                .sendMessage(
+                        argThat(request -> request != null
+                                && request.getParameters()
+                                        .get("text")
+                                        .toString()
+                                        .contains("Неизвестная команда")),
+                        anyLong());
     }
 
     private Update mockUpdate(String text, Long chatId) {

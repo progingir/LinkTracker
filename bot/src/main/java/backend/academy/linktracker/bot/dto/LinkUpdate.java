@@ -6,16 +6,16 @@ import java.net.URI;
 import java.util.List;
 
 public record LinkUpdate(
-    Long id,
-    URI url,
+        Long id,
+        URI url,
 
-    @NotBlank(message = "description не может быть пустым")
-    String description,
+        @NotBlank(message = "description не может быть пустым")
+        String description,
 
-    @NotEmpty(message = "список tgChatIds не может быть пустым")
-    List<Long> tgChatIds,
+        @NotEmpty(message = "список tgChatIds не может быть пустым")
+        List<Long> tgChatIds,
 
-    Boolean isSystemReport) {
+        Boolean isSystemReport) {
 
     public LinkUpdate {
         if (isSystemReport == null) {

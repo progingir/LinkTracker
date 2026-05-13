@@ -19,10 +19,7 @@ public class TelegramMessageSender {
         try {
             response = telegramBot.execute(message);
         } catch (Exception e) {
-            log.atError()
-                .setCause(e)
-                .addKeyValue("user_id", userId)
-                .log("Ошибка сети при отправке в Telegram");
+            log.atError().setCause(e).addKeyValue("user_id", userId).log("Ошибка сети при отправке в Telegram");
             throw new RuntimeException("Unexpected error sending message to user " + userId, e);
         }
 
@@ -31,9 +28,9 @@ public class TelegramMessageSender {
         } else {
             String errorDescription = (response != null) ? response.description() : "Response is null";
             log.atError()
-                .addKeyValue("user_id", userId)
-                .addKeyValue("description", errorDescription)
-                .log("Ошибка API Телеграм");
+                    .addKeyValue("user_id", userId)
+                    .addKeyValue("description", errorDescription)
+                    .log("Ошибка API Телеграм");
 
             throw new RuntimeException("Telegram API error for user " + userId + ": " + errorDescription);
         }

@@ -24,18 +24,16 @@ public class KafkaUpdateSender implements UpdateSender {
 
             kafkaTemplate.send(topicName, update.id().toString(), update).get();
 
-            log.atDebug()
-                .addKeyValue("update_id", update.id())
-                .log("Сообщение успешно доставлено в Kafka");
+            log.atDebug().addKeyValue("update_id", update.id()).log("Сообщение успешно доставлено в Kafka");
 
         } catch (InterruptedException | ExecutionException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
             log.atError()
-                .setCause(e)
-                .addKeyValue("update_id", update.id())
-                .log("Ошибка при отправке сообщения в Kafka");
+                    .setCause(e)
+                    .addKeyValue("update_id", update.id())
+                    .log("Ошибка при отправке сообщения в Kafka");
 
             throw new RuntimeException("Ошибка доставки сообщения в Kafka", e);
         }

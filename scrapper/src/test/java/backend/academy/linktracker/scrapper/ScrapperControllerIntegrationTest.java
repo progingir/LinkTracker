@@ -30,25 +30,25 @@ public class ScrapperControllerIntegrationTest extends ScrapperIntegrationTestBa
         mockMvc.perform(post("/tg-chat/{id}", chatId)).andExpect(status().isOk());
 
         mockMvc.perform(post("/links")
-                .header("Tg-Chat-Id", chatId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("link", link))))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.url").value(link));
+                        .header("Tg-Chat-Id", chatId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("link", link))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.url").value(link));
 
         mockMvc.perform(get("/links").header("Tg-Chat-Id", chatId))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.links[0].url").value(link));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.links[0].url").value(link));
 
         mockMvc.perform(delete("/links")
-                .header("Tg-Chat-Id", chatId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("link", link))))
-            .andExpect(status().isOk());
+                        .header("Tg-Chat-Id", chatId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("link", link))))
+                .andExpect(status().isOk());
 
         mockMvc.perform(get("/links").header("Tg-Chat-Id", chatId))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.size").value(0));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(0));
     }
 
     @Test
@@ -60,30 +60,30 @@ public class ScrapperControllerIntegrationTest extends ScrapperIntegrationTestBa
 
         mockMvc.perform(post("/tg-chat/{id}", validChatId)).andExpect(status().isOk());
         mockMvc.perform(post("/links")
-                .header("Tg-Chat-Id", validChatId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("link", link))))
-            .andExpect(status().isOk());
+                        .header("Tg-Chat-Id", validChatId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("link", link))))
+                .andExpect(status().isOk());
 
         mockMvc.perform(delete("/links")
-                .header("Tg-Chat-Id", nonExistentChatId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("link", link))))
-            .andExpect(status().isNotFound());
+                        .header("Tg-Chat-Id", nonExistentChatId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("link", link))))
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(get("/links").header("Tg-Chat-Id", validChatId))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.size").value(1));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(1));
     }
 
     @Test
     @DisplayName("3.4: Добавление ссылки в несуществующий чат (404)")
     void addLinkToNonExistentChat() throws Exception {
         mockMvc.perform(post("/links")
-                .header("Tg-Chat-Id", 999L)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("link", "https://google.com"))))
-            .andExpect(status().isNotFound());
+                        .header("Tg-Chat-Id", 999L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("link", "https://google.com"))))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -96,10 +96,10 @@ public class ScrapperControllerIntegrationTest extends ScrapperIntegrationTestBa
         mockMvc.perform(delete("/tg-chat/{id}", chatId)).andExpect(status().isOk());
 
         mockMvc.perform(post("/links")
-                .header("Tg-Chat-Id", chatId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("link", "https://stackoverflow.com/q/1"))))
-            .andExpect(status().isNotFound());
+                        .header("Tg-Chat-Id", chatId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("link", "https://stackoverflow.com/q/1"))))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -117,16 +117,16 @@ public class ScrapperControllerIntegrationTest extends ScrapperIntegrationTestBa
         mockMvc.perform(post("/tg-chat/{id}", chatId)).andExpect(status().isOk());
 
         mockMvc.perform(post("/links")
-                .header("Tg-Chat-Id", chatId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("link", link))))
-            .andExpect(status().isOk());
+                        .header("Tg-Chat-Id", chatId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("link", link))))
+                .andExpect(status().isOk());
 
         mockMvc.perform(post("/links")
-                .header("Tg-Chat-Id", chatId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("link", link))))
-            .andExpect(status().isConflict());
+                        .header("Tg-Chat-Id", chatId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("link", link))))
+                .andExpect(status().isConflict());
     }
 
     @Test
@@ -134,21 +134,21 @@ public class ScrapperControllerIntegrationTest extends ScrapperIntegrationTestBa
     void tagsCrudCycle() throws Exception {
         String tagName = "spring-boot";
         String tagResponse = mockMvc.perform(post("/tags")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("name", tagName))))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.name").value(tagName))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("name", tagName))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value(tagName))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
         Long tagId = objectMapper.readTree(tagResponse).get("id").asLong();
 
         String newTagName = "spring-boot-3";
         mockMvc.perform(put("/tags/{id}", tagId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("name", newTagName))))
-            .andExpect(status().isOk());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("name", newTagName))))
+                .andExpect(status().isOk());
 
         mockMvc.perform(delete("/tags/{id}", tagId)).andExpect(status().isOk());
     }

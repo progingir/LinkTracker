@@ -24,7 +24,7 @@ public class OutboxSaveIntegrationTest extends ScrapperIntegrationTestBase {
     @Transactional
     void shouldSaveMessageToOutboxTable() {
         LinkUpdate update = new LinkUpdate(
-            1L, URI.create("https://github.com/test/repo"), "Test description", List.of(12345L), false);
+                1L, URI.create("https://github.com/test/repo"), "Test description", List.of(12345L), false);
 
         outboxUpdateSender.sendUpdate(update);
 

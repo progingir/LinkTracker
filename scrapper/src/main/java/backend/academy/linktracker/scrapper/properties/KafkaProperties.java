@@ -5,25 +5,17 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
-
 @Validated
 @ConfigurationProperties(prefix = "app.kafka")
 public record KafkaProperties(
-    @NotBlank
-    String topic,
+        @NotBlank String topic,
 
-    @Positive
-    int partitions,
+        @Positive int partitions,
 
-    @Positive
-    int replicas,
+        @Positive int replicas,
 
-    @NotBlank
-    String minInsyncReplicas,
+        @NotBlank String minInsyncReplicas,
 
-    @NotBlank
-    String outboxCheckInterval,
+        @NotBlank String outboxCheckInterval,
 
-    @NotBlank
-    String outboxCleanupInterval
-) {}
+        @NotBlank String outboxCleanupInterval) {}

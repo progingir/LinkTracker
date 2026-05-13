@@ -9,5 +9,4 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Import(TestcontainersConfiguration.class)
-public abstract class ScrapperIntegrationTestBase {
-}
+public abstract class ScrapperIntegrationTestBase {}
