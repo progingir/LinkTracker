@@ -23,10 +23,10 @@ public class TelegramMessageSender {
             throw new RuntimeException("Unexpected error sending message to user " + userId, e);
         }
 
-        if (response != null && response.isOk()) {
+        if (response.isOk()) {
             log.atDebug().addKeyValue("user_id", userId).log("Сообщение успешно отправлено пользователю");
         } else {
-            String errorDescription = (response != null) ? response.description() : "Response is null";
+            String errorDescription = response.description();
             log.atError()
                     .addKeyValue("user_id", userId)
                     .addKeyValue("description", errorDescription)
