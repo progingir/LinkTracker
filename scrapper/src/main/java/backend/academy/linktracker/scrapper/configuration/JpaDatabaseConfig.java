@@ -1,14 +1,17 @@
 package backend.academy.linktracker.scrapper.configuration;
 
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import backend.academy.linktracker.scrapper.repository.OutboxRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.TagRepository;
 import backend.academy.linktracker.scrapper.repository.TgChatRepository;
 import backend.academy.linktracker.scrapper.repository.jpa.JpaLinkRepository;
+import backend.academy.linktracker.scrapper.repository.jpa.JpaOutboxRepository;
 import backend.academy.linktracker.scrapper.repository.jpa.JpaSubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.jpa.JpaTagRepository;
 import backend.academy.linktracker.scrapper.repository.jpa.JpaTgChatRepository;
 import backend.academy.linktracker.scrapper.repository.jpa.SpringDataJpaLinkRepository;
+import backend.academy.linktracker.scrapper.repository.jpa.SpringDataJpaOutboxRepository;
 import backend.academy.linktracker.scrapper.repository.jpa.SpringDataJpaSubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.jpa.SpringDataJpaTagRepository;
 import backend.academy.linktracker.scrapper.repository.jpa.SpringDataJpaTgChatRepository;
@@ -34,6 +37,11 @@ public class JpaDatabaseConfig {
     @Bean
     public TagRepository tagRepository(SpringDataJpaTagRepository jpaRepository) {
         return new JpaTagRepository(jpaRepository);
+    }
+
+    @Bean
+    public OutboxRepository outboxRepository(SpringDataJpaOutboxRepository jpaRepository) {
+        return new JpaOutboxRepository(jpaRepository);
     }
 
     @Bean

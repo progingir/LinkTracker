@@ -11,23 +11,32 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class KafkaUpdateSender {
+public class KafkaUpdateSender implements UpdateSender {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Value("${app.kafka.topic}")
     private String topicName;
 
+    @Override
     public void sendUpdate(LinkUpdate update) {
         try {
+
             kafkaTemplate.send(topicName, update.id().toString(), update).get();
 
-            log.atDebug().addKeyValue("update_id", update.id()).log("Сообщение доставлено в Kafka");
+            log.atDebug()
+                .addKeyValue("update_id", update.id())
+                .log("Сообщение успешно доставлено в Kafka");
 
         } catch (InterruptedException | ExecutionException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
+            log.atError()
+                .setCause(e)
+                .addKeyValue("update_id", update.id())
+                .log("Ошибка при отправке сообщения в Kafka");
+
             throw new RuntimeException("Ошибка доставки сообщения в Kafka", e);
         }
     }

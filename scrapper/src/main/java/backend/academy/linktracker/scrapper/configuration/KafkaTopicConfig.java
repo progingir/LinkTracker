@@ -1,25 +1,25 @@
 package backend.academy.linktracker.scrapper.configuration;
 
+import backend.academy.linktracker.scrapper.properties.KafkaProperties;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
 @Configuration
+@RequiredArgsConstructor
 public class KafkaTopicConfig {
-    @Bean
-    public NewTopic linkUpdatesTopic(
-            @Value("${app.kafka.topic}") String topicName,
-            @Value("${app.kafka.partitions:3}") int partitions,
-            @Value("${app.kafka.replicas:3}") int replicas,
-            @Value("${app.kafka.min-insync-replicas:2}") String minInsyncReplicas) {
 
-        return TopicBuilder.name(topicName)
-                .partitions(partitions)
-                .replicas(replicas)
-                .configs(Map.of("min.insync.replicas", minInsyncReplicas))
-                .build();
+    private final KafkaProperties kafkaProperties;
+
+    @Bean
+    public NewTopic linkUpdatesTopic() {
+        return TopicBuilder.name(kafkaProperties.topic())
+            .partitions(kafkaProperties.partitions())
+            .replicas(kafkaProperties.replicas())
+            .configs(Map.of("min.insync.replicas", kafkaProperties.minInsyncReplicas()))
+            .build();
     }
 }

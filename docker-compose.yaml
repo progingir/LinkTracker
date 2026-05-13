@@ -1,4 +1,21 @@
 services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=scrapper
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   kafka1:
     image: confluentinc/cp-kafka:7.4.4
     ports:
@@ -72,6 +89,7 @@ services:
       - kafka3
 
 volumes:
+  postgres_data:
   kafka_1_data:
   kafka_2_data:
   kafka_3_data:

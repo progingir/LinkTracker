@@ -3,6 +3,7 @@ package backend.academy.linktracker.bot.service;
 import backend.academy.linktracker.bot.command.Command;
 import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.bot.handler.StateHandler;
+import backend.academy.linktracker.bot.repository.NotificationInboxRepository;
 import backend.academy.linktracker.bot.state.UserState;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
@@ -21,16 +22,19 @@ public class BotService implements UpdatesListener {
     private final List<Command> commands;
     private final StateService stateService;
     private final Map<UserState, StateHandler> stateHandlers;
+    private final NotificationInboxRepository inboxRepository;
 
     public BotService(
-            TelegramMessageSender messageSender,
-            List<Command> commands,
-            StateService stateService,
-            List<StateHandler> handlers) {
+        TelegramMessageSender messageSender,
+        List<Command> commands,
+        StateService stateService,
+        List<StateHandler> handlers,
+        NotificationInboxRepository inboxRepository) {
         this.messageSender = messageSender;
         this.commands = commands;
         this.stateService = stateService;
         this.stateHandlers = handlers.stream().collect(Collectors.toMap(StateHandler::getHandledState, h -> h));
+        this.inboxRepository = inboxRepository;
     }
 
     @Override
@@ -50,10 +54,10 @@ public class BotService implements UpdatesListener {
                 }
             } catch (Exception e) {
                 log.atError()
-                        .setCause(e)
-                        .addKeyValue("chat_id", chatId)
-                        .addKeyValue("update_id", update.updateId())
-                        .log("Критический сбой при обработке обновления");
+                    .setCause(e)
+                    .addKeyValue("chat_id", chatId)
+                    .addKeyValue("update_id", update.updateId())
+                    .log("Критический сбой при обработке обновления из Telegram API");
             }
         }
         return CONFIRMED_UPDATES_ALL;
@@ -61,16 +65,27 @@ public class BotService implements UpdatesListener {
 
     public void sendNotification(LinkUpdate update) {
         String messageText = update.isSystemReport()
-                ? update.description()
-                : "🔔 *Обновление по ссылке:* " + update.url() + "\n\n" + update.description();
+            ? update.description()
+            : "🔔 *Обновление по ссылке:* " + update.url() + "\n\n" + update.description();
+
+        String updateKey = update.isSystemReport()
+            ? "sys_" + update.description().hashCode()
+            : "upd_" + update.id();
 
         for (Long chatId : update.tgChatIds()) {
-            try {
-                SendMessage message = new SendMessage(chatId, messageText);
-                messageSender.sendMessage(message, chatId);
-            } catch (Exception e) {
-                log.atError().setCause(e).addKeyValue("chat_id", chatId).log("Не удалось отправить уведомление");
+            if (inboxRepository.isProcessed(updateKey, chatId)) {
+                log.atDebug()
+                    .addKeyValue("chat_id", chatId)
+                    .addKeyValue("update_key", updateKey)
+                    .log("Уведомление уже было отправлено ранее, пропускаем дубликат");
+                continue;
             }
+
+            SendMessage message = new SendMessage(chatId, messageText);
+
+            messageSender.sendMessage(message, chatId);
+
+            inboxRepository.markAsProcessed(updateKey, chatId);
         }
     }
 
@@ -84,13 +99,13 @@ public class BotService implements UpdatesListener {
             stateService.clear(chatId);
 
             Command commandToExecute =
-                    commands.stream().filter(c -> c.supports(text)).findFirst().orElse(null);
+                commands.stream().filter(c -> c.supports(text)).findFirst().orElse(null);
 
             if (commandToExecute != null) {
                 log.atInfo()
-                        .addKeyValue("command", commandToExecute.commandName())
-                        .addKeyValue("chat_id", chatId)
-                        .log("Выполняю команду");
+                    .addKeyValue("command", commandToExecute.commandName())
+                    .addKeyValue("chat_id", chatId)
+                    .log("Выполняю команду");
                 return commandToExecute.handle(update);
             } else {
                 return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help.");
@@ -102,9 +117,9 @@ public class BotService implements UpdatesListener {
             return handler.handle(update, context);
         } else {
             log.atWarn()
-                    .addKeyValue("chat_id", chatId)
-                    .addKeyValue("text", text)
-                    .log("Получен текст вне контекста диалога");
+                .addKeyValue("chat_id", chatId)
+                .addKeyValue("text", text)
+                .log("Получен текст вне контекста диалога");
             return new SendMessage(chatId, "Неизвестная команда. Воспользуйтесь /help.");
         }
     }

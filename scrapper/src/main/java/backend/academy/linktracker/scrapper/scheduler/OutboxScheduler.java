@@ -1,7 +1,7 @@
 package backend.academy.linktracker.scrapper.scheduler;
 
 import backend.academy.linktracker.scrapper.entity.OutboxMessageEntity;
-import backend.academy.linktracker.scrapper.repository.jpa.SpringDataJpaOutboxRepository;
+import backend.academy.linktracker.scrapper.repository.OutboxRepository;
 import backend.academy.linktracker.scrapper.service.update.OutboxProcessor;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -15,30 +15,34 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OutboxScheduler {
 
-    private final SpringDataJpaOutboxRepository outboxRepository;
+    private final OutboxRepository outboxRepository;
     private final OutboxProcessor outboxProcessor;
 
     @Scheduled(fixedDelayString = "${app.kafka.outbox-check-interval:5000}")
     @SchedulerLock(name = "processOutbox", lockAtLeastFor = "4s", lockAtMostFor = "10s")
     public void processOutbox() {
-        List<OutboxMessageEntity> pendingMessages =
-                outboxRepository.findTop50ByStatusOrderByIdAsc(OutboxMessageEntity.OutboxStatus.PENDING);
+        List<OutboxMessageEntity> pendingMessages = outboxRepository.findMessagesToProcess(50);
+        if (pendingMessages.isEmpty()) return;
 
-        if (pendingMessages.isEmpty()) {
-            return;
-        }
-
-        log.atInfo().addKeyValue("count", pendingMessages.size()).log("Начата обработка ожидающих сообщений из Outbox");
-
+        log.atInfo().addKeyValue("count", pendingMessages.size()).log("Обработка Outbox");
         for (OutboxMessageEntity message : pendingMessages) {
             try {
                 outboxProcessor.processSingleMessage(message);
             } catch (Exception e) {
-                log.atError()
-                        .setCause(e)
-                        .addKeyValue("message_id", message.getId())
-                        .log("Непредвиденная ошибка при обработке сообщения из Outbox");
+                log.atError().setCause(e).log("Ошибка обработки сообщения");
             }
+        }
+    }
+
+    @Scheduled(fixedDelayString = "${app.kafka.outbox-cleanup-interval:3600000}")
+    @SchedulerLock(name = "cleanupOutbox", lockAtLeastFor = "1m", lockAtMostFor = "5m")
+    public void cleanupOutbox() {
+        log.atInfo().log("Запуск очистки обработанных сообщений Outbox");
+        try {
+            outboxRepository.cleanup();
+            log.atInfo().log("Очистка Outbox завершена успешно");
+        } catch (Exception e) {
+            log.atError().setCause(e).log("Ошибка при очистке Outbox");
         }
     }
 }

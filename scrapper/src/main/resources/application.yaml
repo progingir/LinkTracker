@@ -44,7 +44,11 @@ app:
 
   kafka:
     topic: "link_updates"
+    partitions: ${APP_KAFKA_PARTITIONS:3}
+    replicas: ${APP_KAFKA_REPLICAS:3}
+    min-insync-replicas: "2"
     outbox-check-interval: 5s
+    outbox-cleanup-interval: 1h
 
   bot-client:
     base-url: "http://localhost:8080"

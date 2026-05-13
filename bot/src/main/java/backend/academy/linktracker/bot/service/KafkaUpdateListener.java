@@ -1,6 +1,7 @@
 package backend.academy.linktracker.bot.service;
 
 import backend.academy.linktracker.bot.dto.LinkUpdate;
+import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class KafkaUpdateListener {
                 IllegalArgumentException.class
             })
     @KafkaListener(topics = "${app.kafka.topic}", groupId = "${spring.kafka.consumer.group-id}")
-    public void listenUpdates(@Payload LinkUpdate update) {
+    public void listenUpdates(@Payload @Valid LinkUpdate update) {
         log.atInfo().addKeyValue("update_id", update.id()).log("Получено обновление из Kafka, передаем в бота");
 
         botService.sendNotification(update);

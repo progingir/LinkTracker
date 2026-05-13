@@ -10,10 +10,8 @@ import java.net.URI;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
 public class OutboxSaveIntegrationTest extends ScrapperIntegrationTestBase {
 
     @Autowired
@@ -26,7 +24,7 @@ public class OutboxSaveIntegrationTest extends ScrapperIntegrationTestBase {
     @Transactional
     void shouldSaveMessageToOutboxTable() {
         LinkUpdate update = new LinkUpdate(
-                1L, URI.create("https://github.com/test/repo"), "Test description", List.of(12345L), false);
+            1L, URI.create("https://github.com/test/repo"), "Test description", List.of(12345L), false);
 
         outboxUpdateSender.sendUpdate(update);
 

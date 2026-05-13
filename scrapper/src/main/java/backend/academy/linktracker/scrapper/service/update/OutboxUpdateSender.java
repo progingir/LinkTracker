@@ -2,7 +2,7 @@ package backend.academy.linktracker.scrapper.service.update;
 
 import backend.academy.linktracker.scrapper.dto.LinkUpdate;
 import backend.academy.linktracker.scrapper.entity.OutboxMessageEntity;
-import backend.academy.linktracker.scrapper.repository.jpa.SpringDataJpaOutboxRepository;
+import backend.academy.linktracker.scrapper.repository.OutboxRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 @ConditionalOnProperty(name = "app.use-queue", havingValue = "true", matchIfMissing = true)
 public class OutboxUpdateSender implements UpdateSender {
 
-    private final SpringDataJpaOutboxRepository outboxRepository;
+    private final OutboxRepository outboxRepository;
     private final ObjectMapper objectMapper;
 
     @Override
