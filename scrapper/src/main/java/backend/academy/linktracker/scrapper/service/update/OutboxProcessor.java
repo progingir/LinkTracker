@@ -16,14 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class OutboxProcessor {
 
     private final OutboxRepository outboxRepository;
-    private final KafkaUpdateSender kafkaSender;
+    private final KafkaMessageProducer kafkaProducer;
     private final ObjectMapper objectMapper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processSingleMessage(OutboxMessageEntity message) {
         try {
             LinkUpdate update = objectMapper.readValue(message.getPayload(), LinkUpdate.class);
-            kafkaSender.sendUpdate(update);
+            kafkaProducer.send(update);
 
             message.setStatus(OutboxMessageEntity.OutboxStatus.SENT);
 
