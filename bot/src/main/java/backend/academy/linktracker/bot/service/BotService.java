@@ -3,6 +3,7 @@ package backend.academy.linktracker.bot.service;
 import backend.academy.linktracker.bot.command.Command;
 import backend.academy.linktracker.bot.dto.LinkUpdate;
 import backend.academy.linktracker.bot.handler.StateHandler;
+import backend.academy.linktracker.bot.repository.NotificationInboxRepository;
 import backend.academy.linktracker.bot.state.UserState;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
@@ -21,16 +22,19 @@ public class BotService implements UpdatesListener {
     private final List<Command> commands;
     private final StateService stateService;
     private final Map<UserState, StateHandler> stateHandlers;
+    private final NotificationInboxRepository inboxRepository;
 
     public BotService(
             TelegramMessageSender messageSender,
             List<Command> commands,
             StateService stateService,
-            List<StateHandler> handlers) {
+            List<StateHandler> handlers,
+            NotificationInboxRepository inboxRepository) {
         this.messageSender = messageSender;
         this.commands = commands;
         this.stateService = stateService;
         this.stateHandlers = handlers.stream().collect(Collectors.toMap(StateHandler::getHandledState, h -> h));
+        this.inboxRepository = inboxRepository;
     }
 
     @Override
@@ -53,7 +57,7 @@ public class BotService implements UpdatesListener {
                         .setCause(e)
                         .addKeyValue("chat_id", chatId)
                         .addKeyValue("update_id", update.updateId())
-                        .log("Критический сбой при обработке обновления");
+                        .log("Критический сбой при обработке обновления из Telegram API");
             }
         }
         return CONFIRMED_UPDATES_ALL;
@@ -64,13 +68,23 @@ public class BotService implements UpdatesListener {
                 ? update.description()
                 : "🔔 *Обновление по ссылке:* " + update.url() + "\n\n" + update.description();
 
+        String updateKey =
+                update.isSystemReport() ? "sys_" + update.description().hashCode() : "upd_" + update.id();
+
         for (Long chatId : update.tgChatIds()) {
-            try {
-                SendMessage message = new SendMessage(chatId, messageText);
-                messageSender.sendMessage(message, chatId);
-            } catch (Exception e) {
-                log.atError().setCause(e).addKeyValue("chat_id", chatId).log("Не удалось отправить уведомление");
+            if (inboxRepository.isProcessed(updateKey, chatId)) {
+                log.atDebug()
+                        .addKeyValue("chat_id", chatId)
+                        .addKeyValue("update_key", updateKey)
+                        .log("Уведомление уже было отправлено ранее, пропускаем дубликат");
+                continue;
             }
+
+            SendMessage message = new SendMessage(chatId, messageText);
+
+            messageSender.sendMessage(message, chatId);
+
+            inboxRepository.markAsProcessed(updateKey, chatId);
         }
     }
 

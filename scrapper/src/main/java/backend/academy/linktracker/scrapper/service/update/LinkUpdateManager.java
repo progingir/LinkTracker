@@ -14,6 +14,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -24,9 +25,10 @@ public class LinkUpdateManager {
     private final LinkService linkService;
     private final SubscriptionService subscriptionService;
     private final NotificationFormatter formatter;
-    private final UpdateSender updateSender;
     private final SchedulerProperties schedulerProperties;
+    private final UpdateSender updateSender;
 
+    @Transactional
     public LinkProcessingResult processLinkUpdate(Link link) {
         try {
             Optional<OffsetDateTime> newUpdateTime = executeCheck(link);
@@ -56,7 +58,6 @@ public class LinkUpdateManager {
             Optional<List<UpdateResult>> resultsOpt = service.fetchUpdates(link.url(), link.lastUpdate());
 
             if (resultsOpt.isPresent()) {
-
                 if (link.lastUpdate() == null) {
                     return Optional.of(OffsetDateTime.now());
                 }
@@ -74,7 +75,6 @@ public class LinkUpdateManager {
                         .orElse(link.lastUpdate()));
             }
         }
-
         log.atWarn().addKeyValue("url", link.url()).log("Сервис для обработки ссылки не найден");
         return Optional.empty();
     }
@@ -83,7 +83,9 @@ public class LinkUpdateManager {
         List<Long> chatIds = subscriptionService.getChatIdsByLinkId(link.id());
         if (!chatIds.isEmpty()) {
             String text = formatter.formatUpdate(results);
-            updateSender.sendUpdate(new LinkUpdate(link.id(), link.url(), text, chatIds, false));
+            LinkUpdate update = new LinkUpdate(link.id(), link.url(), text, chatIds, false);
+
+            updateSender.sendUpdate(update);
         }
     }
 }

@@ -15,7 +15,14 @@ public record LinkUpdate(
         @NotEmpty(message = "список tgChatIds не может быть пустым")
         List<Long> tgChatIds,
 
-        boolean isSystemReport) {
+        Boolean isSystemReport) {
+
+    public LinkUpdate {
+        if (isSystemReport == null) {
+            isSystemReport = false;
+        }
+    }
+
     public static LinkUpdate systemReport(String description, List<Long> tgChatIds) {
         return new LinkUpdate(null, null, description, tgChatIds, true);
     }
