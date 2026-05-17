@@ -45,7 +45,7 @@ public class LinkService {
             Optional<ListLinksResponse> cached = cacheService.getLinks(chatId);
             if (cached.isPresent()) {
                 log.atDebug().addKeyValue("chat_id", chatId).log("Возвращаем список ссылок из кэша");
-                return cached.get();
+                return cached.orElseThrow();
             }
         }
 
