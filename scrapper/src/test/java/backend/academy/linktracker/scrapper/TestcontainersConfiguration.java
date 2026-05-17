@@ -1,5 +1,6 @@
 package backend.academy.linktracker.scrapper;
 
+import com.redis.testcontainers.RedisContainer;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -39,6 +40,12 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     public KafkaContainer kafkaContainer() {
         return new KafkaContainer(DockerImageName.parse("apache/kafka:3.7.0"));
+    }
+
+    @Bean
+    @ServiceConnection
+    public RedisContainer redisContainer() {
+        return new RedisContainer(DockerImageName.parse("valkey/valkey:8.0"));
     }
 
     private void runMigrations(PostgreSQLContainer<?> c) {

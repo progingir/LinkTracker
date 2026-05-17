@@ -3,3 +3,7 @@ app:
     partitions: 1
     replicas: 1
     min-insync-replicas: "1"
+
+spring:
+  liquibase:
+    enabled: false

@@ -39,7 +39,22 @@ spring:
       acks: all
       retries: 10
 
+  data:
+    redis:
+      cluster:
+        nodes:
+          - ${VALKEY_NODE_1:localhost:6379}
+          - ${VALKEY_NODE_2:localhost:6380}
+          - ${VALKEY_NODE_3:localhost:6381}
+      timeout: 5000
+
 app:
+  valkey:
+    enabled: true
+    ttl: 10m
+    max-size: 1000
+    host: localhost
+    port: 6379
   use-queue: ${USE_QUEUE:true}
 
   kafka:
@@ -72,3 +87,7 @@ app:
 
   database:
     access-type: jdbc
+
+  cache:
+    ttl: 600000
+
