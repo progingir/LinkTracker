@@ -2,7 +2,7 @@ package backend.academy.linktracker.bot.service;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.request.SendMessage;
-import com.pengrad.telegrambot.response.SendResponse;
+import com.pengrad.telegrambot.response.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,22 +15,24 @@ public class TelegramMessageSender {
     private final TelegramBot telegramBot;
 
     public void sendMessage(SendMessage message, Long userId) {
+        BaseResponse response;
         try {
-            SendResponse response = telegramBot.execute(message);
+            response = telegramBot.execute(message);
+        } catch (Exception e) {
+            log.atError().setCause(e).addKeyValue("user_id", userId).log("Ошибка сети при отправке в Telegram");
+            throw new RuntimeException("Unexpected error sending message to user " + userId, e);
+        }
 
-            if (response.isOk()) {
-                log.atDebug().addKeyValue("user_id", userId).log("Сообщение успешно отправлено пользователю");
-            } else {
-                log.atError()
-                        .addKeyValue("user_id", userId)
-                        .addKeyValue("description", response.description())
-                        .log("Ошибка API Телеграм для пользователя");
-            }
-        } catch (Throwable e) {
+        if (response.isOk()) {
+            log.atDebug().addKeyValue("user_id", userId).log("Сообщение успешно отправлено пользователю");
+        } else {
+            String errorDescription = response.description();
             log.atError()
-                    .setCause(e)
                     .addKeyValue("user_id", userId)
-                    .log("Непредвиденная ошибка при отправке сообщения пользователю");
+                    .addKeyValue("description", errorDescription)
+                    .log("Ошибка API Телеграм");
+
+            throw new RuntimeException("Telegram API error for user " + userId + ": " + errorDescription);
         }
     }
 }

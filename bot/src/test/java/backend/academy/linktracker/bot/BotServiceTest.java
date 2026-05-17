@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import backend.academy.linktracker.bot.command.Command;
+import backend.academy.linktracker.bot.repository.NotificationInboxRepository;
 import backend.academy.linktracker.bot.repository.StateRepository;
 import backend.academy.linktracker.bot.service.BotService;
 import backend.academy.linktracker.bot.service.StateService;
@@ -29,17 +30,19 @@ class BotServiceTest {
     private Command mockCommand;
     private TelegramMessageSender messageSender;
     private StateService stateService;
+    private NotificationInboxRepository inboxRepository;
 
     @BeforeEach
     void setUp() {
         messageSender = mock(TelegramMessageSender.class);
         mockCommand = mock(Command.class);
         stateService = mock(StateService.class);
+        inboxRepository = mock(NotificationInboxRepository.class);
 
         when(stateService.getContext(anyLong()))
                 .thenReturn(new StateRepository.UserContext(DefaultState.NONE, null, null));
 
-        botService = new BotService(messageSender, List.of(mockCommand), stateService, List.of());
+        botService = new BotService(messageSender, List.of(mockCommand), stateService, List.of(), inboxRepository);
     }
 
     @Test

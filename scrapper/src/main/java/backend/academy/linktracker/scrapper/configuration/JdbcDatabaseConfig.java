@@ -1,10 +1,12 @@
 package backend.academy.linktracker.scrapper.configuration;
 
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
+import backend.academy.linktracker.scrapper.repository.OutboxRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.TagRepository;
 import backend.academy.linktracker.scrapper.repository.TgChatRepository;
 import backend.academy.linktracker.scrapper.repository.jdbc.JdbcLinkRepository;
+import backend.academy.linktracker.scrapper.repository.jdbc.JdbcOutboxRepository;
 import backend.academy.linktracker.scrapper.repository.jdbc.JdbcSubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.jdbc.JdbcTagRepository;
 import backend.academy.linktracker.scrapper.repository.jdbc.JdbcTgChatRepository;
@@ -36,5 +38,10 @@ public class JdbcDatabaseConfig {
     @Bean
     public TagRepository tagRepository(JdbcClient jdbcClient) {
         return new JdbcTagRepository(jdbcClient);
+    }
+
+    @Bean
+    public OutboxRepository outboxRepository(JdbcClient jdbcClient) {
+        return new JdbcOutboxRepository(jdbcClient);
     }
 }

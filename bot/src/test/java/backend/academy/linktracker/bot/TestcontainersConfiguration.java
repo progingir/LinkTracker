@@ -2,6 +2,8 @@ package backend.academy.linktracker.bot;
 
 import com.redis.testcontainers.RedisContainer;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Bean;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -24,9 +26,9 @@ class TestcontainersConfiguration {
     }
 
     // Uncomment to start KafkaContainer
-    // @Bean
-    // @ServiceConnection
-    KafkaContainer kafkaContainer() {
-        return new KafkaContainer(DockerImageName.parse("apache/kafka-native:4.1.1"));
+    @Bean
+    @ServiceConnection
+    public KafkaContainer kafkaContainer() {
+        return new KafkaContainer(DockerImageName.parse("apache/kafka:3.7.0"));
     }
 }
