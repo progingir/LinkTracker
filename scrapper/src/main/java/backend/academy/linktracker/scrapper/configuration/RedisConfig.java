@@ -22,22 +22,23 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @EnableCaching
 public class RedisConfig {
 
-    public static final String CACHE_INVALIDATION_TOPIC = "cache:invalidation";
-
     @Value("${app.cache.ttl:600000}")
     private long cacheTtl;
 
     @Bean
-    public ChannelTopic cacheInvalidationTopic() {
-        return new ChannelTopic(CACHE_INVALIDATION_TOPIC);
+    public ChannelTopic cacheInvalidationTopic(
+            backend.academy.linktracker.scrapper.properties.ValkeyProperties properties) {
+        return new ChannelTopic(properties.invalidationTopic());
     }
 
     @Bean
     public RedisMessageListenerContainer cacheMessageListenerContainer(
-            RedisConnectionFactory connectionFactory, MessageListenerAdapter listenerAdapter) {
+            RedisConnectionFactory connectionFactory,
+            MessageListenerAdapter listenerAdapter,
+            ChannelTopic cacheInvalidationTopic) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(listenerAdapter, cacheInvalidationTopic());
+        container.addMessageListener(listenerAdapter, cacheInvalidationTopic);
         return container;
     }
 

@@ -1,7 +1,9 @@
 package backend.academy.linktracker.scrapper.properties;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.time.Duration;
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -11,5 +13,6 @@ public record ValkeyProperties(
         boolean enabled,
         @NotNull Duration ttl,
         @NotNull Long maxSize,
-        @NotNull String host,
-        @NotNull int port) {}
+        @NotEmpty List<String> nodes,
+        @NotNull String invalidationTopic,
+        @NotNull String password) {}

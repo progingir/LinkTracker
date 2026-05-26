@@ -1,93 +1,45 @@
-server:
-  port: 8081
-
-spring:
-  application:
-    name: scrapper
-
-  grpc:
-    server:
-      port: 9091
-    client:
-      default-channel:
-        address: static://${APP_BOT_HOST:localhost}:9090
-        negotiation-type: plaintext
-
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:scrapper}
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:12345}
-    driver-class-name: org.postgresql.Driver
-
-  liquibase:
-    enabled: true
-    change-log: migrations/master.xml
-
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9094,localhost:9096}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      acks: all
-      retries: 10
-
-  data:
-    redis:
-      cluster:
-        nodes:
-          - ${VALKEY_NODE_1:localhost:6379}
-          - ${VALKEY_NODE_2:localhost:6380}
-          - ${VALKEY_NODE_3:localhost:6381}
-      timeout: 5000
-
 app:
+  database:
+    access-type: jpa
+  scheduler:
+    interval: 10s
+    threads-count: 2
+    batch-size: 10
+    max-links-per-run: 100
+    error-threshold: 5
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    topic: link_updates
+    partitions: 1
+    replicas: 1
+    min-insync-replicas: "1"
+    outbox-check-interval: 10s
+    outbox-cleanup-interval: 1m
   valkey:
     enabled: true
     ttl: 10m
     max-size: 1000
-    host: localhost
-    port: 6379
-  use-queue: ${USE_QUEUE:true}
+    nodes: 127.0.0.1:6379,127.0.0.1:6380,127.0.0.1:6381
+    invalidation-topic: cache-invalidation
+    password: ${VALKEY_PASSWORD:password123}
 
-  kafka:
-    topic: "link_updates"
-    partitions: ${APP_KAFKA_PARTITIONS:3}
-    replicas: ${APP_KAFKA_REPLICAS:3}
-    min-insync-replicas: "2"
-    outbox-check-interval: 5s
-    outbox-cleanup-interval: 1h
-
-  bot-client:
-    base-url: "http://localhost:8080"
-    grpc-channel-name: "bot-channel"
-
-  stackoverflow:
-    url: https://api.stackexchange.com/2.3
-    key: ${STACKOVERFLOW_KEY}
-    access-token: ${STACKOVERFLOW_ACCESS_KEY}
-
-  github:
-    url: https://api.github.com
-    token: ${GITHUB_TOKEN}
-
-  scheduler:
-    interval: 30s
-    batch-size: 50
-    threads-count: 4
-    error-threshold: 5
-    max-links-per-run: 1000
-
-  database:
-    access-type: jdbc
-
+spring:
+  application:
+    name: scrapper
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/scrapper}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:12345}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  liquibase:
+    enabled: false
   cache:
-    ttl: 600000
-
+    type: caffeine

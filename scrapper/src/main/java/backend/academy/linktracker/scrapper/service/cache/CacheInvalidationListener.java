@@ -17,7 +17,7 @@ public class CacheInvalidationListener {
             cacheService.invalidateLocal(chatId);
             log.atDebug().addKeyValue("chat_id", chatId).log("L1 Cache invalidated via Pub/Sub");
         } catch (NumberFormatException e) {
-            log.warn("Received invalid cache invalidation message: {}", message);
+            log.atWarn().addKeyValue("message", message).log("Received invalid cache invalidation message");
         }
     }
 }
