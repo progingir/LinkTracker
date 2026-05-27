@@ -11,15 +11,19 @@ import backend.academy.linktracker.scrapper.exception.SubscriptionNotFoundExcept
 import backend.academy.linktracker.scrapper.repository.LinkRepository;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
 import backend.academy.linktracker.scrapper.repository.TgChatRepository;
+import backend.academy.linktracker.scrapper.service.cache.LinkCacheService;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @Service
@@ -29,17 +33,33 @@ public class LinkService {
     private final LinkRepository linkRepository;
     private final TgChatRepository tgChatRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final LinkCacheService cacheService;
 
     @Transactional(readOnly = true)
     public ListLinksResponse getLinksResponse(Long chatId, int limit, Long lastLinkId) {
         validateChatId(chatId);
         checkChatExists(chatId);
 
+        boolean cacheable = limit == 10 && lastLinkId == null;
+        if (cacheable) {
+            Optional<ListLinksResponse> cached = cacheService.getLinks(chatId);
+            if (cached.isPresent()) {
+                log.atDebug().addKeyValue("chat_id", chatId).log("Возвращаем список ссылок из кэша");
+                return cached.orElseThrow();
+            }
+        }
+
         List<LinkResponse> responseList = subscriptionRepository.findByChatId(chatId, limit, lastLinkId).stream()
                 .map(this::mapToResponse)
                 .toList();
 
-        return new ListLinksResponse(responseList, responseList.size());
+        ListLinksResponse response = new ListLinksResponse(responseList, responseList.size());
+
+        if (cacheable) {
+            cacheService.putLinks(chatId, response);
+        }
+
+        return response;
     }
 
     @Transactional
@@ -72,6 +92,13 @@ public class LinkService {
             subscriptionRepository.addTagToSubscription(chatId, link.id(), tag);
         }
 
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                cacheService.evictLinks(chatId);
+            }
+        });
+
         return new LinkResponse(link.id(), link.url(), safeTags);
     }
 
@@ -93,6 +120,13 @@ public class LinkService {
             log.atInfo().addKeyValue("url", uri).log("Ссылка больше не отслеживается. Удаляем из БД");
             linkRepository.remove(link.id());
         }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                cacheService.evictLinks(chatId);
+            }
+        });
 
         return new LinkResponse(link.id(), link.url(), List.of());
     }

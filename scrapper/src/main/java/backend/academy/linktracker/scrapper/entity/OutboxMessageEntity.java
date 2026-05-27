@@ -23,6 +23,7 @@ public class OutboxMessageEntity {
     private OffsetDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private OutboxStatus status;
 
     private Integer attempts = 0;

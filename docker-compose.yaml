@@ -73,8 +73,6 @@ services:
       - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=3
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=2
       - CLUSTER_ID=HsZtPZ7YQ-2L0-V-HwLqHw
-    volumes:
-      - kafka_3_data:/var/lib/kafka/data
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -88,8 +86,54 @@ services:
       - kafka2
       - kafka3
 
+  valkey-node-1:
+    image: bitnami/valkey-cluster:latest
+    container_name: valkey-node-1
+    environment:
+      - VALKEY_PASSWORD=password123
+      - VALKEY_NODES=valkey-node-1 valkey-node-2 valkey-node-3
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey_1_data:/bitnami/valkey/data
+
+  valkey-node-2:
+    image: bitnami/valkey-cluster:latest
+    container_name: valkey-node-2
+    environment:
+      - VALKEY_PASSWORD=password123
+      - VALKEY_NODES=valkey-node-1 valkey-node-2 valkey-node-3
+    volumes:
+      - valkey_2_data:/bitnami/valkey/data
+
+  valkey-node-3:
+    image: bitnami/valkey-cluster:latest
+    container_name: valkey-node-3
+    environment:
+      - VALKEY_PASSWORD=password123
+      - VALKEY_NODES=valkey-node-1 valkey-node-2 valkey-node-3
+    volumes:
+      - valkey_3_data:/bitnami/valkey/data
+
+  valkey-cluster-init:
+    image: valkey/valkey:8.0
+    command: >
+      bash -c "valkey-cli -a password123 --cluster create
+      valkey-node-1:6379
+      valkey-node-2:6379
+      valkey-node-3:6379
+      --cluster-yes"
+    depends_on:
+      - valkey-node-1
+      - valkey-node-2
+      - valkey-node-3
+
 volumes:
   postgres_data:
   kafka_1_data:
   kafka_2_data:
   kafka_3_data:
+  valkey_1_data:
+  valkey_2_data:
+  valkey_3_data:
+

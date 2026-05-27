@@ -1,5 +1,6 @@
 package backend.academy.linktracker.scrapper;
 
+import com.redis.testcontainers.RedisContainer;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -13,6 +14,9 @@ import liquibase.resource.DirectoryResourceAccessor;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -39,6 +43,20 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     public KafkaContainer kafkaContainer() {
         return new KafkaContainer(DockerImageName.parse("apache/kafka:3.7.0"));
+    }
+
+    @Bean
+    @ServiceConnection
+    public RedisContainer redisContainer() {
+        return new RedisContainer(DockerImageName.parse("valkey/valkey:8.0"));
+    }
+
+    @Bean
+    @Primary
+    public LettuceConnectionFactory redisConnectionFactory(RedisContainer redisContainer) {
+        RedisStandaloneConfiguration config =
+                new RedisStandaloneConfiguration(redisContainer.getHost(), redisContainer.getFirstMappedPort());
+        return new LettuceConnectionFactory(config);
     }
 
     private void runMigrations(PostgreSQLContainer<?> c) {

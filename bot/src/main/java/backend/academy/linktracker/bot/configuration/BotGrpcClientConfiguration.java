@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.grpc.client.GrpcChannelFactory;
 
 @Configuration
-public class GrpcClientConfiguration {
+public class BotGrpcClientConfiguration {
 
     @Bean
     public ScrapperServiceGrpc.ScrapperServiceBlockingStub scrapperStub(

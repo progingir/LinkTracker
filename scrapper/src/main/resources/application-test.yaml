@@ -1,5 +1,42 @@
 app:
+  database:
+    access-type: jpa
+  scheduler:
+    interval: 10s
+    threads-count: 2
+    batch-size: 10
+    max-links-per-run: 100
+    error-threshold: 5
+  valkey:
+    enabled: true
+    ttl: 1h
+    max-size: 1000
+    nodes:
+      - "localhost:6379"
+      - "localhost:6380"
+      - "localhost:6381"
+    invalidation-topic: "cache-invalidation"
+    password: "testpassword"
+  github:
+    url: "https://api.github.com"
+    token: "test-token"
+  stackoverflow:
+    url: "https://api.stackexchange.com"
+    key: "test-key"
+    access-token: "test-token"
   kafka:
+    bootstrap-servers: localhost:9092
+    topic: link_updates
     partitions: 1
     replicas: 1
     min-insync-replicas: "1"
+    outbox-check-interval: 10s
+    outbox-cleanup-interval: 1m
+  bot-client:
+    base-url: "http://localhost:8090"
+    grpc-channel-name: "bot-channel"
+
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
