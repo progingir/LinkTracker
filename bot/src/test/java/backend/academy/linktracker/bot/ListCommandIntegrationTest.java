@@ -19,11 +19,7 @@ class ListCommandIntegrationTest extends BotIntegrationTestBase {
         long chatId = 101L;
         when(scrapperClient.getLinks(chatId))
                 .thenReturn(new ListLinksResponse(
-                        List.of(new LinkResponse(
-                                1L,
-                                URI.create("https://github.com/test"),
-                                List.of("dev"))), // Убрали List.of() для фильтров
-                        1));
+                        List.of(new LinkResponse(1L, URI.create("https://github.com/test"), List.of("dev"))), 1));
 
         botService.process(List.of(createUpdate(chatId, "/list")));
 

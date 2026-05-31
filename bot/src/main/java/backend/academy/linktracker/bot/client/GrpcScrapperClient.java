@@ -4,9 +4,13 @@ import backend.academy.linktracker.bot.dto.*;
 import backend.academy.linktracker.bot.exception.*;
 import backend.academy.linktracker.bot.properties.GrpcScrapperProperties;
 import backend.academy.linktracker.grpc.*;
+import backend.academy.linktracker.grpc.ScrapperServiceGrpc.ScrapperServiceBlockingStub;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import io.grpc.ClientInterceptor;
 import io.grpc.Metadata;
-import io.grpc.Status;
+import io.grpc.Metadata.Key;
+import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.MetadataUtils;
 import java.net.URI;
@@ -21,13 +25,14 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "app", name = "scrapper-client-type", havingValue = "grpc", matchIfMissing = true)
+@Retry(name = "scrapper")
+@CircuitBreaker(name = "scrapper")
 public class GrpcScrapperClient implements ScrapperClient {
 
-    private final ScrapperServiceGrpc.ScrapperServiceBlockingStub stub;
+    private final ScrapperServiceBlockingStub stub;
     private final GrpcScrapperProperties grpcProperties;
 
-    private static final Metadata.Key<String> TG_CHAT_ID_KEY =
-            Metadata.Key.of("tg-chat-id", Metadata.ASCII_STRING_MARSHALLER);
+    private static final Key<String> TG_CHAT_ID_KEY = Key.of("tg-chat-id", Metadata.ASCII_STRING_MARSHALLER);
 
     @Override
     public void registerChat(Long chatId) {
@@ -113,7 +118,7 @@ public class GrpcScrapperClient implements ScrapperClient {
         return response;
     }
 
-    private ScrapperServiceGrpc.ScrapperServiceBlockingStub getStubWithHeaders(Long chatId) {
+    private ScrapperServiceBlockingStub getStubWithHeaders(Long chatId) {
         Metadata metadata = new Metadata();
         metadata.put(TG_CHAT_ID_KEY, String.valueOf(chatId));
 
@@ -124,10 +129,10 @@ public class GrpcScrapperClient implements ScrapperClient {
     }
 
     private RuntimeException getGrpcError(StatusRuntimeException e) {
-        Status.Code code = e.getStatus().getCode();
-        if (code == Status.Code.NOT_FOUND) {
+        Code code = e.getStatus().getCode();
+        if (code == Code.NOT_FOUND) {
             return new ResourceNotFoundException("Ресурс не найден: " + e.getMessage());
-        } else if (code == Status.Code.ALREADY_EXISTS) {
+        } else if (code == Code.ALREADY_EXISTS) {
             return new ResourceAlreadyExistsException("Ресурс уже существует: " + e.getMessage());
         }
         return new ScrapperException("Ошибка gRPC: " + code + ". " + e.getMessage());

@@ -1,6 +1,7 @@
 package backend.academy.linktracker.scrapper.properties;
 
 import jakarta.validation.constraints.NotEmpty;
+import java.time.Duration;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,4 +23,6 @@ public class GithubProperties {
 
     @NotEmpty
     private String token;
+
+    private Duration timeout = Duration.ofSeconds(10);
 }

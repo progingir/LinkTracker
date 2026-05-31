@@ -11,21 +11,14 @@ import org.testcontainers.utility.DockerImageName;
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
 
-    // Uncomment to start PostgreSQLContainer
-    // @Bean
-    // @ServiceConnection
     PostgreSQLContainer postgresContainer() {
         return new PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine"));
     }
 
-    // Uncomment to start RedisContainer
-    // @Bean
-    // @ServiceConnection
     RedisContainer redisContainer() {
         return new RedisContainer(DockerImageName.parse("redis:8.2-alpine"));
     }
 
-    // Uncomment to start KafkaContainer
     @Bean
     @ServiceConnection
     public KafkaContainer kafkaContainer() {

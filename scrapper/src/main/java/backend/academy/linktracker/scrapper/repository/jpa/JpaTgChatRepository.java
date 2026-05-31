@@ -2,6 +2,7 @@ package backend.academy.linktracker.scrapper.repository.jpa;
 
 import backend.academy.linktracker.scrapper.entity.ChatEntity;
 import backend.academy.linktracker.scrapper.repository.TgChatRepository;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 
@@ -9,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 public class JpaTgChatRepository implements TgChatRepository {
 
     private final SpringDataJpaTgChatRepository jpaRepository;
-    private final jakarta.persistence.EntityManager entityManager;
+    private final EntityManager entityManager;
 
     @Override
     public void addChat(Long chatId) {

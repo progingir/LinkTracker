@@ -5,6 +5,7 @@ import backend.academy.linktracker.scrapper.entity.SubscriptionEntity;
 import backend.academy.linktracker.scrapper.entity.SubscriptionId;
 import backend.academy.linktracker.scrapper.entity.TagEntity;
 import backend.academy.linktracker.scrapper.repository.SubscriptionRepository;
+import jakarta.persistence.EntityManager;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,7 @@ public class JpaSubscriptionRepository implements SubscriptionRepository {
     private final SpringDataJpaTgChatRepository chatRepo;
     private final SpringDataJpaLinkRepository linkRepo;
     private final SpringDataJpaTagRepository tagRepo;
-    private final jakarta.persistence.EntityManager entityManager;
+    private final EntityManager entityManager;
 
     @Override
     public void addSubscription(Long chatId, Long linkId) {

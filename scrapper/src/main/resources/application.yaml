@@ -1,6 +1,10 @@
 app:
   database:
     access-type: jpa
+  retry:
+    statuses: 500,502,503,504,429
+    initial-interval: 500ms
+    multiplier: 1.0
   scheduler:
     interval: 10s
     threads-count: 2
@@ -43,3 +47,48 @@ spring:
     enabled: false
   cache:
     type: caffeine
+
+resilience4j.retry:
+  configs:
+    default:
+      maxAttempts: 3
+      waitDuration: 1s
+  instances:
+    scrapper:
+      baseConfig: default
+    github:
+      baseConfig: default
+    stackoverflow:
+      baseConfig: default
+
+resilience4j.circuitbreaker:
+  configs:
+    default:
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 10
+      minimumRequiredCalls: 5
+      failureRateThreshold: 50
+      permittedCallsInHalfOpenState: 5
+      waitDurationInOpenState: 1s
+  instances:
+    scrapper:
+      baseConfig: default
+    github:
+      baseConfig: default
+    stackoverflow:
+      baseConfig: default
+
+app.retry.statuses: 500,502,503,504,429
+resilience4j.retry.instances.bot.baseConfig: default
+resilience4j.circuitbreaker.instances.bot.baseConfig: default
+
+resilience4j.ratelimiter:
+  configs:
+    default:
+      limitForPeriod: 100
+      limitRefreshPeriod: 1s
+      timeoutDuration: 0s
+    ip-rate-limit:
+      limitForPeriod: 50
+      limitRefreshPeriod: 1s
+      timeoutDuration: 0s

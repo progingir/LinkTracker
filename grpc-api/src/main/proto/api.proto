@@ -2,12 +2,10 @@ syntax = "proto3";
 package backend.academy.linktracker.grpc;
 option java_multiple_files = true;
 
-// Сервис, который работает на стороне Бота
 service BotService {
   rpc SendUpdate (LinkUpdateMsg) returns (Empty);
 }
 
-// Сервис, который работает на стороне Скраппера
 service ScrapperService {
   rpc RegisterChat (ChatRequest) returns (Empty);
   rpc DeleteChat (ChatRequest) returns (Empty);
