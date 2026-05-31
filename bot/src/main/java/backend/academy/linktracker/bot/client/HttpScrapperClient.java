@@ -6,6 +6,8 @@ import backend.academy.linktracker.bot.exception.ResourceNotFoundException;
 import backend.academy.linktracker.bot.exception.ScrapperException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -24,6 +26,8 @@ import org.springframework.web.client.RestClient;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "app", name = "scrapper-client-type", havingValue = "http")
+@Retry(name = "scrapper")
+@CircuitBreaker(name = "scrapper")
 public class HttpScrapperClient implements ScrapperClient {
 
     private final RestClient scrapperRestClient;

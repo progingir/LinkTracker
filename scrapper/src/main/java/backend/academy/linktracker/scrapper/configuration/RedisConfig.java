@@ -1,6 +1,7 @@
 package backend.academy.linktracker.scrapper.configuration;
 
 import backend.academy.linktracker.scrapper.dto.ListLinksResponse;
+import backend.academy.linktracker.scrapper.properties.ValkeyProperties;
 import backend.academy.linktracker.scrapper.service.cache.CacheInvalidationListener;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,8 +27,7 @@ public class RedisConfig {
     private long cacheTtl;
 
     @Bean
-    public ChannelTopic cacheInvalidationTopic(
-            backend.academy.linktracker.scrapper.properties.ValkeyProperties properties) {
+    public ChannelTopic cacheInvalidationTopic(ValkeyProperties properties) {
         return new ChannelTopic(properties.invalidationTopic());
     }
 

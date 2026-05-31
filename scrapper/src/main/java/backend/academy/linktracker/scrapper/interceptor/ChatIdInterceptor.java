@@ -1,13 +1,13 @@
 package backend.academy.linktracker.scrapper.interceptor;
 
 import io.grpc.*;
+import io.grpc.Metadata.Key;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ChatIdInterceptor implements ServerInterceptor {
 
-    public static final Metadata.Key<String> TG_CHAT_ID_KEY =
-            Metadata.Key.of("tg-chat-id", Metadata.ASCII_STRING_MARSHALLER);
+    public static final Key<String> TG_CHAT_ID_KEY = Key.of("tg-chat-id", Metadata.ASCII_STRING_MARSHALLER);
 
     public static final Context.Key<Long> CHAT_ID_CTX = Context.key("chatId");
 
