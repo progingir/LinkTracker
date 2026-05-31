@@ -1,4 +1,7 @@
-﻿# 🔗 Интеллектуальный агрегатор обновлений «LinkTracker»
+# 🔗 Интеллектуальный агрегатор обновлений «LinkTracker»
+
+[![Documentation](https://img.shields.io/badge/docs-specification-blue)](https://docs.google.com/document/d/1k8eELVRix6ytpj_uxBr7OGzwohUIJI34/edit)
+[![Project Status](https://img.shields.io/badge/status-active-brightgreen)]()
 
 [![Documentation](https://img.shields.io/badge/docs-specification-blue)](https://docs.google.com/document/d/1k8eELVRix6ytpj_uxBr7OGzwohUIJI34/edit)
 [![Project Status](https://img.shields.io/badge/status-active-brightgreen)]()
