@@ -3,9 +3,6 @@
 [![Documentation](https://img.shields.io/badge/docs-specification-blue)](https://docs.google.com/document/d/1k8eELVRix6ytpj_uxBr7OGzwohUIJI34/edit)
 [![Project Status](https://img.shields.io/badge/status-active-brightgreen)]()
 
-[![Documentation](https://img.shields.io/badge/docs-specification-blue)](https://docs.google.com/document/d/1k8eELVRix6ytpj_uxBr7OGzwohUIJI34/edit)
-[![Project Status](https://img.shields.io/badge/status-active-brightgreen)]()
-
 LinkTracker — это клиент-серверная система с микросервисной архитектурой для отслеживания обновлений с различных веб-ресурсов (GitHub, Stack Overflow и др.) через единый и удобный Telegram-бот.
 
 Вместо того чтобы вручную проверять каждую страницу или зависеть от встроенных механизмов оповещений каждого сайта, система предоставляет централизованную платформу для мониторинга контента. Это экономит время, снижает информационную нагрузку и гарантирует, что пользователь не пропустит важные изменения.
