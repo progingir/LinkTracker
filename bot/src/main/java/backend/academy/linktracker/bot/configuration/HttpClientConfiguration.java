@@ -2,6 +2,7 @@ package backend.academy.linktracker.bot.configuration;
 
 import backend.academy.linktracker.bot.exception.ScrapperApiException;
 import backend.academy.linktracker.bot.properties.ScrapperClientProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatusCode;
@@ -10,6 +11,11 @@ import org.springframework.web.client.RestClient;
 
 @Configuration
 public class HttpClientConfiguration {
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper().findAndRegisterModules();
+    }
 
     @Bean
     public RestClient scrapperRestClient(RestClient.Builder builder, ScrapperClientProperties properties) {

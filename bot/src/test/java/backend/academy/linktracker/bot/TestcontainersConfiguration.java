@@ -12,16 +12,19 @@ import org.testcontainers.utility.DockerImageName;
 class TestcontainersConfiguration {
 
     PostgreSQLContainer postgresContainer() {
-        return new PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine"));
+        return new PostgreSQLContainer(DockerImageName.parse("mirror.gcr.io/library/postgres:18-alpine").asCompatibleSubstituteFor("postgres"));
     }
 
     RedisContainer redisContainer() {
-        return new RedisContainer(DockerImageName.parse("redis:8.2-alpine"));
+        return new RedisContainer(DockerImageName.parse("mirror.gcr.io/library/redis:8.2-alpine").asCompatibleSubstituteFor("redis"));
     }
 
     @Bean
     @ServiceConnection
     public KafkaContainer kafkaContainer() {
-        return new KafkaContainer(DockerImageName.parse("apache/kafka:3.7.0"));
+        return new KafkaContainer(DockerImageName.parse("mirror.gcr.io/apache/kafka:3.7.0").asCompatibleSubstituteFor("apache/kafka"));
     }
 }
+
+
+

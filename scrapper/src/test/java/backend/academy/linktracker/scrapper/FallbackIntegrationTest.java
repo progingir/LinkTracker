@@ -1,7 +1,9 @@
 package backend.academy.linktracker.scrapper;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 import backend.academy.linktracker.grpc.BotServiceGrpc;
@@ -31,6 +33,7 @@ public class FallbackIntegrationTest extends ScrapperIntegrationTestBase {
 
     @Test
     public void testFallbackToKafka() {
+        when(botServiceBlockingStub.withDeadlineAfter(anyLong(), any())).thenReturn(botServiceBlockingStub);
         doThrow(new StatusRuntimeException(Status.UNAVAILABLE))
                 .when(botServiceBlockingStub)
                 .sendUpdate(any());

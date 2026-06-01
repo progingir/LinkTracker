@@ -27,7 +27,7 @@ public class TestcontainersConfiguration {
     @Bean
     @ServiceConnection
     public PostgreSQLContainer<?> postgresContainer() {
-        PostgreSQLContainer<?> container = new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"))
+        PostgreSQLContainer<?> container = new PostgreSQLContainer<>(DockerImageName.parse("mirror.gcr.io/library/postgres:16-alpine").asCompatibleSubstituteFor("postgres"))
                 .withDatabaseName("scrapper-test-db")
                 .withUsername("postgres")
                 .withPassword("12345");
@@ -42,13 +42,13 @@ public class TestcontainersConfiguration {
     @Bean
     @ServiceConnection
     public KafkaContainer kafkaContainer() {
-        return new KafkaContainer(DockerImageName.parse("apache/kafka:3.7.0"));
+        return new KafkaContainer(DockerImageName.parse("mirror.gcr.io/apache/kafka:3.7.0").asCompatibleSubstituteFor("apache/kafka"));
     }
 
     @Bean
     @ServiceConnection
     public RedisContainer redisContainer() {
-        return new RedisContainer(DockerImageName.parse("valkey/valkey:8.0"));
+        return new RedisContainer(DockerImageName.parse("mirror.gcr.io/valkey/valkey:8.0").asCompatibleSubstituteFor("valkey/valkey"));
     }
 
     @Bean
@@ -79,3 +79,5 @@ public class TestcontainersConfiguration {
         }
     }
 }
+
+

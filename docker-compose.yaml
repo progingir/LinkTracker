@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: mirror.gcr.io/library/postgres:16
     container_name: postgres
     ports:
       - "5432:5432"
@@ -17,7 +17,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   kafka1:
-    image: confluentinc/cp-kafka:7.4.4
+    image: mirror.gcr.io/confluentinc/cp-kafka:7.4.4
     ports:
       - "9092:9092"
     environment:
@@ -37,7 +37,7 @@ services:
       - kafka_1_data:/var/lib/kafka/data
 
   kafka2:
-    image: confluentinc/cp-kafka:7.4.4
+    image: mirror.gcr.io/confluentinc/cp-kafka:7.4.4
     ports:
       - "9094:9094"
     environment:
@@ -57,7 +57,7 @@ services:
       - kafka_2_data:/var/lib/kafka/data
 
   kafka3:
-    image: confluentinc/cp-kafka:7.4.4
+    image: mirror.gcr.io/confluentinc/cp-kafka:7.4.4
     ports:
       - "9096:9096"
     environment:
@@ -75,9 +75,9 @@ services:
       - CLUSTER_ID=HsZtPZ7YQ-2L0-V-HwLqHw
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:latest
+    image: mirror.gcr.io/provectuslabs/kafka-ui:latest
     ports:
-      - "8081:8080"
+      - "8082:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka1:29092,kafka2:29094,kafka3:29096
@@ -87,46 +87,90 @@ services:
       - kafka3
 
   valkey-node-1:
-    image: bitnami/valkey-cluster:latest
+    image: mirror.gcr.io/bitnami/valkey:latest
     container_name: valkey-node-1
     environment:
       - VALKEY_PASSWORD=password123
-      - VALKEY_NODES=valkey-node-1 valkey-node-2 valkey-node-3
     ports:
       - "6379:6379"
     volumes:
       - valkey_1_data:/bitnami/valkey/data
 
   valkey-node-2:
-    image: bitnami/valkey-cluster:latest
+    image: mirror.gcr.io/bitnami/valkey:latest
     container_name: valkey-node-2
     environment:
       - VALKEY_PASSWORD=password123
-      - VALKEY_NODES=valkey-node-1 valkey-node-2 valkey-node-3
     volumes:
       - valkey_2_data:/bitnami/valkey/data
 
   valkey-node-3:
-    image: bitnami/valkey-cluster:latest
+    image: mirror.gcr.io/bitnami/valkey:latest
     container_name: valkey-node-3
     environment:
       - VALKEY_PASSWORD=password123
-      - VALKEY_NODES=valkey-node-1 valkey-node-2 valkey-node-3
     volumes:
       - valkey_3_data:/bitnami/valkey/data
 
-  valkey-cluster-init:
-    image: valkey/valkey:8.0
-    command: >
-      bash -c "valkey-cli -a password123 --cluster create
-      valkey-node-1:6379
-      valkey-node-2:6379
-      valkey-node-3:6379
-      --cluster-yes"
+  scrapper:
+    build:
+      context: .
+      dockerfile: scrapper/Dockerfile
+    container_name: scrapper
     depends_on:
-      - valkey-node-1
-      - valkey-node-2
-      - valkey-node-3
+      postgres:
+        condition: service_healthy
+      kafka1:
+        condition: service_started
+    environment:
+      - SERVER_PORT=8081
+      - SPRING_GRPC_SERVER_PORT=9091
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/scrapper
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29094,kafka3:29096
+      - SPRING_DATA_REDIS_HOST=valkey-node-1
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_PASSWORD=password123
+      - SPRING_LIQUIBASE_ENABLED=true
+      - SPRING_LIQUIBASE_CHANGE_LOG=file:/app/migrations/master.xml
+      - APP_GITHUB_URL=https://api.github.com
+      - APP_GITHUB_TOKEN=dummy_token
+      - APP_STACKOVERFLOW_URL=https://api.stackexchange.com/2.3
+      - APP_STACKOVERFLOW_KEY=dummy_key
+      - APP_STACKOVERFLOW_ACCESS_TOKEN=dummy_access_token
+      - APP_BOT_CLIENT_BASE_URL=http://bot:8080
+    ports:
+      - "8081:8081"
+      - "9091:9091"
+    volumes:
+      - ./migrations:/app/migrations
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+
+  bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    container_name: bot
+    depends_on:
+      - scrapper
+    env_file:
+      - .env
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_GRPC_SERVER_PORT=9090
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29094,kafka3:29096
+      - SPRING_DATA_REDIS_HOST=valkey-node-1
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_PASSWORD=password123
+      - APP_SCRAPPER_CLIENT_BASE_URL=http://scrapper:8081
+      - APP_SCRAPPER_CLIENT_TYPE=http
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
 
 volumes:
   postgres_data:
@@ -136,4 +180,3 @@ volumes:
   valkey_1_data:
   valkey_2_data:
   valkey_3_data:
-

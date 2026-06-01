@@ -35,6 +35,10 @@ spring:
         spring.json.use.type.headers: false
         spring.json.value.default.type: backend.academy.linktracker.bot.dto.LinkUpdate
 
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
 app:
   kafka:
     topic: "link_updates"
@@ -52,13 +56,13 @@ app:
     debug: false
 
   scrapper-client:
-    base-url: http://localhost:8081
+    base-url: ${APP_SCRAPPER_CLIENT_BASE_URL:http://localhost:8081}
     grpc-channel-name: scrapper-channel
 
   grpc:
     scrapper-deadline: 5s
 
-  scrapper-client-type: grpc
+  scrapper-client-type: http
 
 logging:
   structured:

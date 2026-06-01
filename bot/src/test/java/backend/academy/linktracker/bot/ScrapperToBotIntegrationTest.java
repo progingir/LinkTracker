@@ -14,7 +14,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 public class ScrapperToBotIntegrationTest extends BotIntegrationTestBase {
 
     @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -31,9 +31,9 @@ public class ScrapperToBotIntegrationTest extends BotIntegrationTestBase {
         LinkUpdate update = new LinkUpdate(
                 100L, URI.create("https://github.com/user/repo"), "Обновление обнаружено", List.of(chatId), false);
 
-        String updateJson = objectMapper.writeValueAsString(update);
+        
 
-        kafkaTemplate.send("link_updates", update.id().toString(), updateJson);
+        kafkaTemplate.send("link_updates", update.id().toString(), update);
 
         Thread.sleep(3000);
 

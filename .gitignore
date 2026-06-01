@@ -53,3 +53,5 @@ build/
 .DS_Store
 
 bot/.env
+
+.env
